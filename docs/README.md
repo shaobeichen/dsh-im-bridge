@@ -5,6 +5,8 @@
 | 你想做什么 | 看这篇 |
 |---|---|
 | **把飞书跑通，在手机/电脑飞书里指挥 agent**（推荐路径） | [`feishu-setup.md`](feishu-setup.md) —— 从创建自建应用到在飞书里派活/审批，完整独立指南 |
+| 企业微信 | [`wecom-setup.md`](wecom-setup.md) —— 自建应用 + 回调加密 + 可信 IP |
+| Telegram（最省事） | [`telegram-setup.md`](telegram-setup.md) —— BotFather 建 bot，2 分钟搞定 |
 | 先不看真 IM，在终端里体验效果（不需要任何 token） | 仓库根目录 `README.md` →「怎么用」，或 `node demo/mock-demo.mjs` |
 | 装进真实 DSH profile（`dsh plugin add` + `cordis.patch.yml`） | [`install.md`](install.md) + [`example-cordis.patch.yml`](example-cordis.patch.yml) |
 | 了解产品需求与设计依据 | [`PRD-v0.5.md`](PRD-v0.5.md)（原始产品需求文档） |
