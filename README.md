@@ -45,7 +45,7 @@ dsh-im-bridge 是一个"聊天机器人"中间件。装好之后，你在飞书�
 |---|---|---|---|
 | 飞书 | 在[开放平台](https://open.feishu.cn/app)建企业自建应用，拿 App ID / App Secret（[图文指引](docs/feishu-setup.md)） | 设好 `FEISHU_APP_ID`、`FEISHU_APP_SECRET`、`DEEPSEEK_API_KEY`，然后运行<br>`node demo/feishu-real.mjs --mode demo` | 私聊机器人：`/new` 建会话 → 直接派活；危险操作弹审批卡片，点按钮放行 |
 | 企业微信 | 在[管理后台](https://work.weixin.qq.com/wework_admin/frame)建自建应用，拿 CorpID / AgentId / Secret，并配置回调地址和可信 IP（[指引](docs/wecom-setup.md)） | 设好 `WECOM_CORP_ID`、`WECOM_AGENT_ID`、`WECOM_SECRET`、`WECOM_CALLBACK_TOKEN`、`WECOM_ENCODING_AES_KEY`，然后运行<br>`node demo/wecom-real.mjs --mode demo` | 手机"工作台"打开应用：`/new` → 派活；危险操作收到审批文本，回复 `/approve <id> yes`（企微无按钮） |
-| Telegram | 用 [@BotFather](https://t.me/BotFather) 建 bot，拿 token | 设好 `TELEGRAM_BOT_TOKEN`，然后运行<br>`node demo/telegram-real.mjs --mode demo` | 私聊 bot：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |
+| Telegram | 用 [@BotFather](https://t.me/BotFather) 建 bot，拿 token（[图文指引](docs/telegram-setup.md)） | 设好 `TELEGRAM_BOT_TOKEN`，然后运行<br>`node demo/telegram-real.mjs --mode demo` | 私聊 bot：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |
 
 详细的逐屏配置步骤，见各平台的 setup 文档（上面"准备"列已链接）。
 

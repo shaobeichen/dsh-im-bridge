@@ -45,7 +45,7 @@ All three platforms follow the same rhythm: **prepare → start → chat**. You 
 |---|---|---|---|
 | Feishu | Create an enterprise self-built app on the [Open Platform](https://open.feishu.cn/app), get App ID / App Secret ([guide](docs/feishu-setup.md)) | Set `FEISHU_APP_ID`, `FEISHU_APP_SECRET`, `DEEPSEEK_API_KEY`, then run<br>`node demo/feishu-real.mjs --mode demo` | Private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
 | WeCom | Create a self-built app in the [admin console](https://work.weixin.qq.com/wework_admin/frame), get CorpID / AgentId / Secret, configure callback URL and Trusted IP ([guide](docs/wecom-setup.md)) | Set `WECOM_CORP_ID`, `WECOM_AGENT_ID`, `WECOM_SECRET`, `WECOM_CALLBACK_TOKEN`, `WECOM_ENCODING_AES_KEY`, then run<br>`node demo/wecom-real.mjs --mode demo` | Open the app from "Workbench": `/new` → send tasks; approval comes as text — reply `/approve <id> yes` (no buttons) |
-| Telegram | Create a bot with [@BotFather](https://t.me/BotFather), get the token | Set `TELEGRAM_BOT_TOKEN`, then run<br>`node demo/telegram-real.mjs --mode demo` | Private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
+| Telegram | Create a bot with [@BotFather](https://t.me/BotFather), get the token ([guide](docs/telegram-setup.md)) | Set `TELEGRAM_BOT_TOKEN`, then run<br>`node demo/telegram-real.mjs --mode demo` | Private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
 
 Step-by-step console screenshots live in each platform's setup doc (linked in the "Prepare" column).
 
