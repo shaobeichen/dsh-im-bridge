@@ -333,8 +333,10 @@ export class ImRuntime extends Service {
       this.map.addToAllowlist(platform, userId);
       this.log.info(`trust-on-first-contact: auto-trusted ${platform}:${userId} | 首次接触：已自动信任 ${platform}:${userId}`);
       await this.send({ platform, chatId }, {
-        text: `👋 首次接触，已自动信任 ${userName ?? userId}（security.trustOnFirstContact=true）。\n发送 /new 创建会话开始派活。`,
+        text: `👋 首次接触，已自动信任 ${userName ?? userId}（security.trustOnFirstContact=true）。`,
       });
+      // 不吞掉首条任务：信任后立即按正常流程派发（autoCreate=true 时直接建会话执行）
+      await this.dispatchTask(msg);
       return;
     }
 

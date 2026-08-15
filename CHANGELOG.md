@@ -39,6 +39,9 @@
   现在超限保留最新尾部，完整输出走 `/log`
 - **流式离线判定 flake**：`isOnline` 毫秒边界（touch 与 appendStream 同毫秒被判在线）导致
   测试偶发；测试改为确定性离线，并消除其连带时序抖动
+- **首次接触自动信任不再吞掉首条任务（真实飞书联调发现）**：`trustOnFirstContact=true` 时
+  原实现发完欢迎语就返回，用户的第一条真实任务被丢弃、必须重发；现在信任后立即按正常
+  流程派发（autoCreate=true 时直接建会话执行），并补集成测试
 - **`connection` 硬依赖致插件永不激活（真实飞书联调发现）**：飞书/微信适配器曾把
   `connection` 写进 `inject`——demo 运行器的裸 Context 没有该服务时插件永远 waiting、
   apply 不执行、进程空转退出；而 web 设置页签本就优雅降级。改为可选依赖（web-rpc 用

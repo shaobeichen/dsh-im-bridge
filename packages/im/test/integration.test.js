@@ -269,3 +269,28 @@ test('管理员只配 admins（allowlist 留空）也能直接通过安全门（
     await teardown();
   }
 });
+
+test('首次接触自动信任 → 首条任务不丢失（信任后直接派发并返回结果）', async () => {
+  const script = [
+    {
+      chunks: [
+        { type: 'text-delta', index: 0, text: '收到，已开始处理你的第一个任务 ✅' },
+        { type: 'finish', reason: { kind: 'stop' } },
+      ],
+    },
+  ];
+  const { mock, teardown } = await setup(script, {
+    security: { allowlist: [], admins: [], autoCreate: true, trustOnFirstContact: true },
+  });
+  try {
+    await mock.sendFromUser({ chatId: 'c3', userId: 'new-user', userName: '新人', text: '帮我跑一下测试' });
+    const result = await waitFor(
+      () => mock.sent.find((m) => m.text.includes('任务完成')),
+      { label: 'first task result card', timeoutMs: 8000 },
+    );
+    assert.ok(result.text.includes('已开始处理你的第一个任务'), '首条任务直接派发并得到结果卡片');
+    assert.ok(mock.sent.some((m) => m.text.includes('已自动信任')), '欢迎语仍在（信任提示）');
+  } finally {
+    await teardown();
+  }
+});
