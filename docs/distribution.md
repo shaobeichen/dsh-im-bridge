@@ -57,13 +57,13 @@ dsh-plugin  deepseek-harness  im-bridge  feishu  lark  wecom  telegram  ai-agent
 **README.md（英文）**，加在 `### Notifications & Integrations` 分类下：
 
 ```markdown
-- [shaobeichen/dsh-im-bridge](https://github.com/shaobeichen/dsh-im-bridge) - IM bridge for DeepSeek Harness: dispatch tasks, receive result notifications, and approve risky operations from Feishu, WeCom, and Telegram.
+- [shaobeichen/dsh-im-bridge](https://github.com/shaobeichen/dsh-im-bridge) - IM bridge for DeepSeek Harness: dispatch tasks, receive result notifications, and approve risky operations from Feishu, WeCom, and Telegram. Official-SDK adapters, approval cards, admin one-tap trust — zero config for end users.
 ```
 
 **README.zh.md（中文）**，加在「通知与集成」分类下：
 
 ```markdown
-- [shaobeichen/dsh-im-bridge](https://github.com/shaobeichen/dsh-im-bridge) — 让 DeepSeek Harness 通过飞书、企业微信、Telegram 远程派活、接收结果通知、审批危险操作。
+- [shaobeichen/dsh-im-bridge](https://github.com/shaobeichen/dsh-im-bridge) — 让 DeepSeek Harness 通过飞书、企业微信、Telegram 远程派活、接收结果通知、审批危险操作。官方 SDK 适配器、审批卡片、管理员一键信任——普通用户零配置。
 ```
 
 要求自查（都已满足或随 PR 说明）：
