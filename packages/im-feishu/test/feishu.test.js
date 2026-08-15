@@ -5,7 +5,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { apply, parseMessageContent } from '../lib/index.js';
+import { Context } from '@deepseek-ai/cordis';
+
+import { apply, parseMessageContent, plugin as feishuPlugin } from '../lib/index.js';
 
 /** Stub 官方 SDK：记录调用，可触发事件 handler；failCreateWith/failPatchWith 注入业务失败。 */
 function fakeSdk({ failCreateWith = null, failPatchWith = null } = {}) {
@@ -248,4 +250,17 @@ test('缺少凭据时不创建 SDK Client（不触发 ClientAssertionError）', 
   const dispose2 = apply(ctx(im2), { appId: 'app1', appSecret: 'sec1' }, { sdk: sdk2.fakeSdk });
   assert.equal(im2.channels.get('feishu').status.connected, true);
   dispose2();
+});
+
+test('无 Connection 服务：插件仍激活（回归：inject 不得硬依赖 connection）', async () => {
+  // 历史缺陷：inject: ['im','connection'] 使 demo/feishu-real.mjs 的裸 Context
+  // （无 Connection 服务）里插件永远 waiting、apply 不执行、进程空转退出。
+  // web 设置页签本来就优雅降级，connection 必须是可选依赖。
+  const im = fakeIm();
+  const ctx = new Context();
+  ctx.provide('im', im);
+  const handle = ctx.plugin(feishuPlugin, { appId: 'app1', appSecret: 'sec1' });
+  await handle.await();
+  assert.ok(im.channels.has('feishu'), 'apply 已执行：渠道已注册');
+  await handle.dispose();
 });

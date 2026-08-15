@@ -14,11 +14,15 @@ function fail(code, message) {
 
 /** 注册 /im-feishu 逻辑通道（仅本机 loopback 可调）。 */
 export function installFeishuWebRpc(ctx, { session, getStatus, log = console }) {
-  if (!ctx?.connection?.rpc?.handle) {
+  // connection 是可选服务：真实 Cordis 上下文必须用 ctx.get 读取（本 Cordis 变体对未注入的
+  // ctx.connection 属性访问直接抛错）；测试假件可能直接给 connection 属性。两者都支持，
+  // 无 Connection RPC 的组合（demo 裸 Context）优雅降级。
+  const connection = typeof ctx?.get === 'function' ? ctx.get('connection') : ctx?.connection;
+  if (!connection?.rpc?.handle) {
     log.warn?.('dsh-im-feishu: DSH Host Connection RPC unavailable — web settings tab disabled | 无 Connection RPC，网页设置页签不可用');
     return () => {};
   }
-  return ctx.connection.rpc.handle(FEISHU_RPC_CHANNEL, async (endpoint, payload = {}, signal) => {
+  return connection.rpc.handle(FEISHU_RPC_CHANNEL, async (endpoint, payload = {}, signal) => {
     if (signal?.aborted) return fail('cancelled', 'The request was cancelled.');
 
     try {

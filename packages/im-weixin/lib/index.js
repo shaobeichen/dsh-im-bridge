@@ -22,7 +22,9 @@ import { installWeixinWebRpc } from './web-rpc.js';
 import { createWeixinBindSession } from './provision.js';
 
 const name = 'im-weixin';
-const inject = ['im', 'connection'];
+// connection 不是硬依赖：web 设置页签（扫码绑定）需要它，但无 Connection RPC 的
+// 运行器组合必须照样激活——installWeixinWebRpc 会优雅降级（与 dsh-im-feishu 同因修复）。
+const inject = ['im'];
 
 const Config = z.object({
   botToken: z.string().default('env:WECHAT_BOT_TOKEN'),
@@ -212,3 +214,7 @@ export function apply(ctx, config = {}, internals = {}) {
     return { ok: true };
   }
 }
+
+export { name, inject, Config };
+export default { name, inject, Config, apply };
+export const plugin = { name, inject, Config, apply };

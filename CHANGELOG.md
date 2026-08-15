@@ -35,6 +35,11 @@
   现在超限保留最新尾部，完整输出走 `/log`
 - **流式离线判定 flake**：`isOnline` 毫秒边界（touch 与 appendStream 同毫秒被判在线）导致
   测试偶发；测试改为确定性离线，并消除其连带时序抖动
+- **`connection` 硬依赖致插件永不激活（真实飞书联调发现）**：飞书/微信适配器曾把
+  `connection` 写进 `inject`——demo 运行器的裸 Context 没有该服务时插件永远 waiting、
+  apply 不执行、进程空转退出；而 web 设置页签本就优雅降级。改为可选依赖（web-rpc 用
+  `ctx.get('connection')` 读取，本 Cordis 变体对未注入属性访问直接抛错），并补两个
+  激活回归测试（真实 Cordis Context 无 connection 挂载插件）
 - **文档**：install.md 补充 Windows 缺 pnpm 的安装前置说明
 - **安全门体验**：管理员（`security.admins`）隐式放行，不再要求重复写 `allowlist`——普通用户零配置，首接触由管理员一键 `/trust` 确认（FR-8.2/9.2）；全空配置时启动给出双语引导提示（`im.security.admins: ["平台:userId"]`），未授权回复附上同样的可抄配置
 

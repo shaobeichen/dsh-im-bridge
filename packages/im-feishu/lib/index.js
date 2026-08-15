@@ -22,7 +22,10 @@ import { installFeishuWebRpc } from './web-rpc.js';
 import { createFeishuProvisionSession } from './provision.js';
 
 const name = 'im-feishu';
-const inject = ['im', 'connection'];
+// connection 不是硬依赖：web 设置页签（扫码接入）需要它，但无 Connection RPC 的
+// 运行器组合（demo/feishu-real.mjs 的裸 Context）必须照样激活——installFeishuWebRpc
+// 会优雅降级。曾作为 inject 硬依赖导致此类组合里插件永远等待、apply 不执行。
+const inject = ['im'];
 
 /** 流式卡片正文上限（lark_md 字段限制内取保守值）。 */
 const STREAM_TAIL_CHARS = 2800;
