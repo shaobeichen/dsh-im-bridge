@@ -12,12 +12,9 @@
 
 import { readFile, writeFile, mkdir, readdir, stat } from 'node:fs/promises';
 import { join, resolve, relative, sep } from 'node:path';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 
 import { PathPolicy } from './policy.js';
-
-const execFileP = promisify(execFile);
+import { runShell } from './shell.mjs';
 
 /** 把用户给的路径解析到工作区内；越界抛错（受限模式用）。 */
 export function resolveInWorkspace(workspace, p) {
@@ -120,7 +117,7 @@ function buildShellTool({ workspace }) {
     async execute(args, exec) {
       const cmd = String(args.command ?? '');
       try {
-        const { stdout, stderr } = await execFileP('/bin/bash', ['-c', cmd], {
+        const { stdout, stderr } = await runShell(cmd, {
           cwd: workspace,
           timeout: 60_000,
           maxBuffer: 8 * 1024 * 1024,

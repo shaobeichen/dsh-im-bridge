@@ -2,17 +2,20 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { join, normalize, resolve } from 'node:path';
 
 import { PathPolicy } from './policy.js';
 
 const HOME = homedir();
 
 test('解析：~ 展开、相对基于 baseDir、.. 折叠', () => {
+  // 断言用 node:path 自身的解析结果做平台无关的期望值（Windows 上 POSIX 风格输入
+  // 会解析为当前盘符下的绝对/根相对路径，不能硬编码 '/Users/x/...' 字面量）。
   const p = new PathPolicy({ baseDir: '/Users/x' });
   assert.equal(p.resolve('~/foo'), join(HOME, 'foo'));
-  assert.equal(p.resolve('a/b'), '/Users/x/a/b');
-  assert.equal(p.resolve('/etc/passwd'), '/etc/passwd');
+  assert.equal(p.resolve('a/b'), resolve('/Users/x', 'a/b'));
+  // '/etc/passwd' 以分隔符开头：win32 视为根相对（normalize 保留该形态），POSIX 原样。
+  assert.equal(p.resolve('/etc/passwd'), normalize('/etc/passwd'));
   assert.equal(p.resolve('~/a/../b'), join(HOME, 'b'));
 });
 

@@ -21,10 +21,8 @@ import readline from 'node:readline';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 
-const execFileP = promisify(execFile);
+import { runShell } from './shell.mjs';
 
 const require = createRequire(import.meta.url);
 const { Context } = await import('@deepseek-ai/cordis');
@@ -123,7 +121,7 @@ if (REAL) {
     async execute(args, exec) {
       const cmd = String(args.command ?? '');
       try {
-        const { stdout, stderr } = await execFileP('/bin/bash', ['-c', cmd], {
+        const { stdout, stderr } = await runShell(cmd, {
           cwd: workspace,
           timeout: 60_000,
           maxBuffer: 8 * 1024 * 1024,
