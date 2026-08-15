@@ -90,4 +90,4 @@ This project executes remote instructions and touches real files, so security is
 
 ## License
 
-MIT. This is an independent implementation of the PRD, not affiliated with deepseek-ai.
+MIT

@@ -90,4 +90,4 @@ DeepSeek Harness（真正干活）
 
 ## License
 
-MIT。本项目是 PRD 的独立实现，与 deepseek-ai 官方无关联。
+MIT
