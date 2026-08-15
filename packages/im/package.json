@@ -1,6 +1,6 @@
 {
   "name": "dsh-im",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "统一 IM 桥核心：让 DeepSeek Harness 通过 IM 可指挥、可通知、可审批（会话映射 / 命令 / 通知总线 / 审批流 / MockChannel）。",
   "type": "module",
   "main": "lib/index.js",
