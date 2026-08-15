@@ -1,12 +1,23 @@
-import { test } from 'node:test';
+import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { NotifyBus } from '../lib/notify.js';
 import { SessionMap } from '../lib/session-map.js';
 
+// 每个测试用独立临时目录，避免共享路径下多个 map 的防抖保存并发写同一
+// .tmp 文件（rename ENOENT 竞态）；afterEach 清掉防抖定时器。
+const liveMaps = [];
+afterEach(() => {
+  for (const m of liveMaps.splice(0)) m.dispose();
+});
+
 function makeBus({ quietHours = [], onlineWindowMin = 10, streamWhileOnline = true } = {}) {
   const sent = [];
-  const map = new SessionMap('/tmp/im-notify-test');
+  const map = new SessionMap(mkdtempSync(join(tmpdir(), 'im-notify-')));
+  liveMaps.push(map);
   map.create('mock', 'c1', { chatType: 'private' });
   map.touch('mock', 'c1', 'u1', 'Alice');
   const bus = new NotifyBus({
