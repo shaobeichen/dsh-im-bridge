@@ -1,9 +1,9 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/banner.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/banner.png">
-  <img alt="dsh-im-bridge" src="docs/banner.png" width="720">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/banner.jpg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/banner.jpg">
+  <img alt="dsh-im-bridge" src="docs/banner.jpg" width="720">
 </picture>
 
 <h1>dsh-im-bridge</h1>
