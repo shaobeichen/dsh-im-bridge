@@ -1,0 +1,51 @@
+# 示例：dsh-im-bridge 的 cordis.patch.yml（追加到 $DSH_HOME/profiles/<name>/cordis.patch.yml）
+#
+# 配置原则（PRD §9）：① 密钥一律 env: 引用；② 默认值全部偏保守（deny-all）；
+# ③ 每个渠道独立 enabled；④ 用户可见配置全部可视化（本文件是高级项）。
+- insert:
+    - id: im
+      name: 'dsh-im'
+      config:
+        security:
+          allowlist: []                       # 可派活用户，如 ["telegram:123456789"]
+          admins: []                          # 管理员，如 ["telegram:123456789"]
+          autoCreate: false                   # 新聊天默认不自动建会话（FR-2.3）
+          maxSessions: 10                     # FR-2.4
+          trustOnFirstContact: false          # 个人自用可开 true（否则走管理员确认）
+        approvals:
+          enabled: true
+          timeoutSec: 300                     # FR-6.4：超时 → pending（可恢复拒绝）
+          pendingMaxSec: 3600                 # 兜底：仍无人响应 → 失败关闭
+          autoApproveRisk: none               # none|low|medium（FR-6.6）
+          # riskRules:                        # 自定义风险规则（缺省用内置默认）
+          #   - { tool: 'tool-bash', args: 'rm -rf', risk: 'high' }
+        notifications:
+          onTurnEnd: true                     # FR-5.3
+          onError: true
+          includeReasoning: false             # FR-3.6 推理渲染（v1.5）
+          includeCost: true
+          pricing: { inputPerM: 0, outputPerM: 0 }   # 0 = 仅显示 token，不估算金额
+          quietHours: []                      # 如 ["22:00-08:00"]（FR-5.4）
+          streamWhileOnline: true             # FR-3.3/5.5
+          onlineWindowMin: 10
+          flushIntervalMs: 400
+        agent:
+          provider: ''                        # 空 = agentDefaultModel / 默认模型
+          model: ''
+          workspace: ''                       # 空 = dsh 启动目录
+        storeDir: ''                          # 空 = $DSH_HOME/dsh-im
+
+    - id: im-telegram
+      name: 'dsh-im-telegram'
+      config:
+        token: 'env:TELEGRAM_BOT_TOKEN'
+        mode: polling                         # polling（免公网，推荐）| webhook
+        pollIntervalMs: 1000
+        # webhookUrl: 'https://your.domain/hook'   # mode=webhook 时必填
+
+    # 飞书（experimental）：需要真实自建应用凭据 + 长连接事件订阅
+    # - id: im-feishu
+    #   name: 'dsh-im-feishu'
+    #   config:
+    #     appId: 'env:FEISHU_APP_ID'
+    #     appSecret: 'env:FEISHU_APP_SECRET'

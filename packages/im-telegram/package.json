@@ -1,0 +1,24 @@
+{
+  "name": "dsh-im-telegram",
+  "version": "0.1.0-rc.1",
+  "description": "Telegram 渠道适配器（dsh-im 插件家族）：bot API polling 长连接，免公网；支持内联按钮审批卡片。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "dsh-im": "^0.1.0-rc.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

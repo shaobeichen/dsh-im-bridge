@@ -1,0 +1,61 @@
+{
+  "name": "dsh-im-bridge",
+  "version": "0.1.0-rc.1",
+  "private": true,
+  "description": "统一 IM 桥插件家族（monorepo）：核心 dsh-im + 渠道适配器（telegram / feishu）。让 DeepSeek Harness 通过 IM 可指挥、可通知、可审批。",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "node --test --test-timeout=15000 \"packages/*/test/*.test.js\" \"demo/*.test.js\"",
+    "test:im": "node --test --test-timeout=15000 \"packages/im/test/*.test.js\"",
+    "test:telegram": "node --test --test-timeout=8000 \"packages/im-telegram/test/*.test.js\"",
+    "test:feishu": "node --test --test-timeout=8000 \"packages/im-feishu/test/*.test.js\""
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-agent": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-agent-loop": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-agent-loop-testkit": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-bash-sandbox": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-llm": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-llm-deepseek": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-sandbox-local": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-sandbox-policy": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-session": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-shell-env": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-subprocess-local": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-system-prompt": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-tool-bash": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-user-approval": "^0.1.0-rc.6",
+    "@larksuiteoapi/node-sdk": "^1.73.0",
+    "@wecom/crypto": "^1.0.1"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "im-bridge",
+    "feishu",
+    "lark",
+    "wecom",
+    "telegram",
+    "ai-agent",
+    "remote-approval"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shaobeichen/dsh-im-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shaobeichen/dsh-im-bridge/issues"
+  },
+  "homepage": "https://github.com/shaobeichen/dsh-im-bridge",
+  "author": "dsh-im-bridge contributors"
+}

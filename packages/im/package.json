@@ -1,0 +1,33 @@
+{
+  "name": "dsh-im",
+  "version": "0.1.0-rc.1",
+  "description": "统一 IM 桥核心：让 DeepSeek Harness 通过 IM 可指挥、可通知、可审批（会话映射 / 命令 / 通知总线 / 审批流 / MockChannel）。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./mock-channel": {
+      "default": "./lib/mock-channel.js"
+    },
+    "./channel": {
+      "default": "./lib/channel.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-agent": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-session": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-llm": "^0.1.0-rc.6",
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "dsh-im-wecom",
+  "version": "0.1.0-rc.1",
+  "description": "企业微信 渠道适配器（dsh-im 插件家族）。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": { ".": { "default": "./lib/index.js" }, "./package.json": "./package.json" },
+  "files": ["lib"],
+  "license": "MIT",
+  "dependencies": {
+    "@wecom/crypto": "^1.0.1"
+  },
+  "peerDependencies": { "@deepseek-ai/cordis": "^4.0.1", "dsh-im": "^0.1.0-rc.1" },
+  "engines": { "node": ">=22" }
+}

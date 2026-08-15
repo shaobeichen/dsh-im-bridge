@@ -1,0 +1,12 @@
+node_modules/
+.npm-cache/
+*.log
+.DS_Store
+packages/*/test/.tmp/
+.bin/
+
+# 本地凭据/环境（绝不提交）
+.env
+.env.*
+!.env.example
+*.local
