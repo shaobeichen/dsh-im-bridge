@@ -22,33 +22,32 @@ dsh-plugin  deepseek-harness  im-bridge  feishu  lark  wecom  telegram  ai-agent
 
 保存。`dsh-plugin` 是必须的（awesome 列表硬性要求），其余是曝光。
 
-## ② 发布 npm（已配置 GitHub Actions 自动发布）
+## ② 发布 npm（GitHub 打 Release 即自动发布，零本地命令）
 
-仓库已带 `.github/workflows/npm-publish.yml`：**打 `v*` tag 即自动测试 + 发布 4 个包**（先核心后渠道）。
+仓库已带 `.github/workflows/npm-publish.yml`：**在 GitHub 手动创建一个 Release，workflow 就会自动：测试 → 把 tag 版本同步进 4 个包的 package.json → 按顺序发布到 npm**。
 
-**一次性配置（10 分钟）**：
+**一次性配置（10 分钟，只需一次）**：
 
 1. 注册 npm 账号：https://www.npmjs.com/signup
-2. 生成发布 token：npmjs.com → 头像 → **Access Tokens** → Generate New Token → 类型选 **Automation**（或 Publish）→ 复制
-3. 把 token 存进仓库 Secret：GitHub 仓库 → **Settings → Secrets and variables → Actions → New repository secret** → 名字填 **`NPM_TOKEN`**，值粘贴 token
+2. 生成发布 token：npmjs.com → 头像 → **Access Tokens** → Generate New Token → 类型选 **Automation** → 复制
+3. 存进仓库 Secret：GitHub 仓库 → **Settings → Secrets and variables → Actions → New repository secret** → 名字 **`NPM_TOKEN`**，值粘贴 token
 
-**以后每次发布（两条命令）**：
+**以后每次发布（全程网页操作，不用碰终端）**：
 
-```sh
-npm version 0.1.0 --workspaces   # 4 个包统一升版 + 打 tag v0.1.0
-git push origin main --tags      # 触发 workflow：测试 → 发布 → 完成
-```
+1. GitHub 仓库 → **Releases** → **Draft a new release**
+2. **Choose a tag** → 新建一个版本号 tag（必须是语义化版本，如 `v0.1.0` / `v1.2.3`）
+3. 写标题和说明 → **Publish release**
+4. 到 **Actions** 页看进度；完成后在 npm 搜索 `dsh-im` 即可看到
 
-到 Actions 页看发布结果；发布后在 npm 搜索 `dsh-im` 确认。
+**说明**：
 
-安装命令（发布后生效）：
+- tag 里的版本号会自动写进 4 个包的 package.json（`v0.1.0` → `0.1.0`），不用手动改
+- 发布顺序固定：先 `dsh-im` 核心，再三个渠道
+- 某包已发布过同版本时会自动跳过（重跑安全）
+- 正式版本号（如 `0.1.0`）默认就是 npm 的 latest，`dsh plugin add dsh-im` 直接能装
+- 安装命令（发布后生效）：`dsh plugin --profile web add dsh-im dsh-im-feishu`（或 `dsh-im-wecom` / `dsh-im-telegram`）
 
-```sh
-dsh plugin --profile web add dsh-im dsh-im-feishu   # 或 dsh-im-wecom / dsh-im-telegram
-```
-
-> 版本约定：当前都是 `0.1.0-rc.1`。首次正式发布建议直接 `npm version 0.1.0 --workspaces`（正式版默认 latest，`dsh plugin add` 直接能装；rc 版默认走 next tag）。
-> 已检查：4 个包名 npm 全部可用 ✅；发布元数据（license/repository/keywords/dsh.bundle/publishConfig）✅；tarball 含 `cordis.patch.yml` ✅。
+已检查：4 个包名 npm 全部可用 ✅；发布元数据（license/repository/keywords/dsh.bundle/publishConfig）✅；tarball 含 `cordis.patch.yml` ✅。
 
 ## ③ awesome-dsh-plugin PR（分类：Notifications & Integrations / 通知与集成）
 

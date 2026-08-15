@@ -1,21 +1,22 @@
 name: npm publish
 
-# 打 tag（v*）即触发：跑测试 → 发布 4 个包到 npm。
-# 发布顺序：先 dsh-im 核心，再三个渠道（渠道 peerDepend 核心）。
+# 手动在 GitHub 打 Release（tag 形如 v0.1.0）即触发：
+#   测试 → 把 tag 版本同步进 4 个包的 package.json → 按顺序发布到 npm。
+# 不需要在本地跑任何发布命令。
 #
 # 首次配置（一次性）：
-#   1. npmjs.com → Access Tokens → Generate New Token → 类型选 Automation（或 Publish）
-#   2. 仓库 Settings → Secrets and variables → Actions → New repository secret
-#      名字 NPM_TOKEN，值粘贴刚生成的 token
+#   1. npmjs.com → Access Tokens → Generate New Token → Automation
+#   2. 仓库 Settings → Secrets → New repository secret → 名字 NPM_TOKEN，值=token
 #
-# 发布流程：
-#   npm version 0.1.0 --workspaces    # 统一升版 + 打 tag v0.1.0
-#   git push origin main --tags       # 触发本 workflow，自动测试并发布
+# 发布流程（以后每次都一样）：
+#   1. GitHub 仓库 → Releases → Draft a new release
+#   2. Choose a tag → 新建 v0.1.0（版本号随意，但必须是 semver，如 v0.1.0 / v1.2.3）
+#   3. 写标题/说明 → Publish release
+#   4. 到 Actions 页看发布进度，完成后 npm 上即可见
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
 
 jobs:
   publish:
@@ -29,19 +30,47 @@ jobs:
       - run: npm ci
       - name: 测试
         run: npm test
-      - name: 发布 dsh-im（核心）
-        run: npm publish --workspace dsh-im
+      - name: 同步版本（release tag → 4 个包 package.json）
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          echo "发布版本: $VERSION"
+          echo "IM_VERSION=$VERSION" >> "$GITHUB_ENV"
+          npm version "$VERSION" --workspaces --no-git-tag-version
+      - name: 发布 dsh-im（核心，先发）
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if npm view dsh-im@${{ env.IM_VERSION }} version >/dev/null 2>&1; then
+            echo "dsh-im@${{ env.IM_VERSION }} 已存在，跳过"
+          else
+            npm publish --workspace dsh-im
+          fi
       - name: 发布 dsh-im-telegram
-        run: npm publish --workspace dsh-im-telegram
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if npm view dsh-im-telegram@${{ env.IM_VERSION }} version >/dev/null 2>&1; then
+            echo "已存在，跳过"
+          else
+            npm publish --workspace dsh-im-telegram
+          fi
       - name: 发布 dsh-im-feishu
-        run: npm publish --workspace dsh-im-feishu
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if npm view dsh-im-feishu@${{ env.IM_VERSION }} version >/dev/null 2>&1; then
+            echo "已存在，跳过"
+          else
+            npm publish --workspace dsh-im-feishu
+          fi
       - name: 发布 dsh-im-wecom
-        run: npm publish --workspace dsh-im-wecom
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if npm view dsh-im-wecom@${{ env.IM_VERSION }} version >/dev/null 2>&1; then
+            echo "已存在，跳过"
+          else
+            npm publish --workspace dsh-im-wecom
+          fi
