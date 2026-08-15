@@ -15,6 +15,10 @@
 - 事件订阅（长连接）：
   - `im.message.receive_v1`（接收消息）→ 统一 ImMessage → `ctx.im.dispatchInbound`
   - `card.action.trigger`（卡片回传交互，**在开放平台「回调配置」页签添加**）→ `ctx.im.handleCallback`
+- 群聊 @ 过滤（`groupMentionOnly: true`，默认）：**群聊中只有手动 @ 机器人的消息才回复**，
+  其他消息不响应（私聊不受影响）。判定依赖机器人身份查询（`bot/v3/info`，懒加载 + 缓存）；
+  身份查询失败时群聊消息失败关闭（跳过，宁可漏回不在群里刷屏）。
+  被 @ 消息文本中的 `@_user_N` 占位符会被清洗（机器人自身移除，他人替换为 `@昵称`）
 - 出站：
   - 文本消息 `im.message.create`（`receive_id_type` 按入站学习 + id 前缀启发：`ou_`=open_id / `oc_`=chat_id）
   - 审批卡片：`msg_type: interactive`，按钮 value 携带 `{action, id, answer}` 回传；卡片标题用 `out.title`

@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 
 import { Context } from '@deepseek-ai/cordis';
 
-import { apply, parseMessageContent, plugin as feishuPlugin } from '../lib/index.js';
+import { apply, parseMessageContent, cleanMentions, isBotMentioned, plugin as feishuPlugin } from '../lib/index.js';
 
 /** Stub 官方 SDK：记录调用，可触发事件 handler；failCreateWith/failPatchWith 注入业务失败。 */
 function fakeSdk({ failCreateWith = null, failPatchWith = null } = {}) {
@@ -88,6 +88,21 @@ function fakeIm() {
 }
 
 const ctx = (im) => ({ get: () => im, logger: () => ({ info() {}, warn() {}, error() {}, debug() {} }) });
+
+/** 假机器人身份查询（fetch 注入）：记录调用并按需返回 token / bot info。 */
+function fakeFetch({ tokenResult, infoResult } = {}) {
+  const calls = [];
+  return {
+    calls,
+    impl: async (url, init = {}) => {
+      calls.push({ url, init });
+      if (String(url).includes('tenant_access_token')) {
+        return { json: async () => (tokenResult ?? { tenant_access_token: 't-tok-1' }) };
+      }
+      return { json: async () => (infoResult ?? { code: 0, bot: { open_id: 'ou_bot', app_name: '空目' } }) };
+    },
+  };
+}
 
 test('parseMessageContent：text / post / file', () => {
   assert.equal(parseMessageContent({ message_type: 'text', content: JSON.stringify({ text: '跑一下 pytest' }) }), '跑一下 pytest');
@@ -263,4 +278,134 @@ test('无 Connection 服务：插件仍激活（回归：inject 不得硬依赖 
   await handle.await();
   assert.ok(im.channels.has('feishu'), 'apply 已执行：渠道已注册');
   await handle.dispose();
+});
+
+// ── 群聊 @ 过滤（群聊仅回复手动 @ 机器人的消息） ──────────────────────────────
+
+/** 构造一条群聊消息事件（mentions 下标 N-1 对应文本里的 @_user_N）。 */
+function groupMessage({ text = '你好', mentions = [] } = {}) {
+  return {
+    sender: { sender_type: 'user', sender_id: { open_id: 'ou_1' } },
+    message: {
+      message_id: 'om_g1',
+      chat_id: 'oc_g1',
+      chat_type: 'group',
+      message_type: 'text',
+      mentions,
+      content: JSON.stringify({ text }),
+    },
+  };
+}
+
+test('群聊 @ 机器人 → 派发；@ 占位符清洗（机器人自身移除、他人替换为 @昵称）', async () => {
+  const sdk = fakeSdk();
+  const im = fakeIm();
+  const dispose = apply(ctx(im), { appId: 'app1', appSecret: 'sec1' }, { sdk: sdk.fakeSdk, botOpenId: 'ou_bot' });
+  sdk.emitMessage(groupMessage({
+    text: '@_user_1 @_user_2 帮我看看这个报错',
+    mentions: [
+      { key: 'ou_bot', id: { open_id: 'ou_bot' }, name: '空目' },
+      { key: 'ou_1', id: { open_id: 'ou_1' }, name: '小明' },
+    ],
+  }));
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(im.inbound.length, 1, '被 @ 的群消息应派发');
+  assert.equal(im.inbound[0].chatType, 'group');
+  assert.equal(im.inbound[0].text, '@小明 帮我看看这个报错', '机器人自身 @ 移除，他人 @ 替换为昵称');
+  dispose();
+});
+
+test('群聊未 @ 机器人 → 不派发（不刷屏）', async () => {
+  const sdk = fakeSdk();
+  const im = fakeIm();
+  const dispose = apply(ctx(im), { appId: 'app1', appSecret: 'sec1' }, { sdk: sdk.fakeSdk, botOpenId: 'ou_bot' });
+  sdk.emitMessage(groupMessage({
+    text: '大家早上好',
+    mentions: [{ key: 'ou_1', id: { open_id: 'ou_1' }, name: '小明' }],
+  }));
+  sdk.emitMessage(groupMessage({ text: '没有任何 @ 的消息' }));
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(im.inbound.length, 0, '未 @ 机器人的群消息不派发');
+  dispose();
+});
+
+test('私聊消息 → 总是派发（@ 过滤只作用于群聊）', async () => {
+  const sdk = fakeSdk();
+  const im = fakeIm();
+  const dispose = apply(ctx(im), { appId: 'app1', appSecret: 'sec1' }, { sdk: sdk.fakeSdk, botOpenId: 'ou_bot' });
+  sdk.emitMessage({
+    sender: { sender_type: 'user', sender_id: { open_id: 'ou_1' } },
+    message: { message_id: 'om_p1', chat_id: 'oc_p1', chat_type: 'p2p', message_type: 'text', content: JSON.stringify({ text: 'hi' }) },
+  });
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(im.inbound.length, 1);
+  assert.equal(im.inbound[0].text, 'hi');
+  dispose();
+});
+
+test('groupMentionOnly=false → 群聊未 @ 也派发', async () => {
+  const sdk = fakeSdk();
+  const im = fakeIm();
+  const dispose = apply(ctx(im), { appId: 'app1', appSecret: 'sec1', groupMentionOnly: false }, { sdk: sdk.fakeSdk, botOpenId: 'ou_bot' });
+  sdk.emitMessage(groupMessage({ text: '不用 @ 也会回复' }));
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(im.inbound.length, 1);
+  dispose();
+});
+
+test('机器人身份直连查询（token + bot/v3/info）并缓存复用', async () => {
+  const sdk = fakeSdk();
+  const im = fakeIm();
+  const ff = fakeFetch();
+  const dispose = apply(ctx(im), { appId: 'app1', appSecret: 'sec1' }, { sdk: sdk.fakeSdk, fetchImpl: ff.impl });
+  sdk.emitMessage(groupMessage({ text: '@_user_1 在吗', mentions: [{ key: 'ou_bot', id: { open_id: 'ou_bot' }, name: '空目' }] }));
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(im.inbound.length, 1, '身份查询成功后 @ 判定通过并派发');
+  const tokenCall = ff.calls.find((c) => String(c.url).includes('tenant_access_token'));
+  const infoCall = ff.calls.find((c) => String(c.url).includes('bot/v3/info'));
+  assert.ok(tokenCall, '调用租户 token 接口');
+  assert.equal(JSON.parse(tokenCall.init.body).app_id, 'app1');
+  assert.equal(tokenCall.init.method, 'POST');
+  assert.ok(infoCall, '调用 bot/v3/info');
+  assert.equal(infoCall.init.headers.authorization, 'Bearer t-tok-1');
+  // 再次群消息：身份已缓存，不再发查询请求
+  const callsBefore = ff.calls.length;
+  sdk.emitMessage(groupMessage({ text: '@_user_1 第二次', mentions: [{ key: 'ou_bot', id: { open_id: 'ou_bot' }, name: '空目' }] }));
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(ff.calls.length, callsBefore, '身份缓存后不再重复查询');
+  dispose();
+});
+
+test('身份查询失败 → 群聊失败关闭（不派发），私聊不受影响', async () => {
+  const sdk = fakeSdk();
+  const im = fakeIm();
+  const ff = fakeFetch({ tokenResult: { code: 99991663, msg: 'forbidden' } });
+  const dispose = apply(ctx(im), { appId: 'app1', appSecret: 'sec1' }, { sdk: sdk.fakeSdk, fetchImpl: ff.impl });
+  sdk.emitMessage(groupMessage({ text: '@_user_1 在吗', mentions: [{ key: 'ou_bot', id: { open_id: 'ou_bot' } }] }));
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(im.inbound.length, 0, '身份未知无法校验 @ → 跳过（宁可漏回不刷屏）');
+  sdk.emitMessage({
+    sender: { sender_type: 'user', sender_id: { open_id: 'ou_1' } },
+    message: { message_id: 'om_p2', chat_id: 'oc_p2', chat_type: 'p2p', message_type: 'text', content: JSON.stringify({ text: 'hi' }) },
+  });
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(im.inbound.length, 1, '私聊不受身份查询影响');
+  dispose();
+});
+
+test('纯函数：isBotMentioned / cleanMentions 边界', () => {
+  const botId = 'ou_bot';
+  assert.equal(isBotMentioned({ mentions: [{ key: botId }] }, botId), true);
+  assert.equal(isBotMentioned({ mentions: [{ id: { open_id: botId } }] }, botId), true);
+  assert.equal(isBotMentioned({ mentions: [{ key: 'ou_other' }] }, botId), false);
+  assert.equal(isBotMentioned({ mentions: [] }, botId), false);
+  assert.equal(isBotMentioned({}, botId), false);
+  assert.equal(isBotMentioned({ mentions: [{ key: botId }] }, null), false, '无机器人身份一律 false');
+  // 清洗：机器人自身移除、他人替换昵称、无昵称移除、无身份时他人替换
+  assert.equal(cleanMentions('@_user_1 你好', [{ key: 'ou_bot', name: '空目' }], 'ou_bot'), '你好');
+  assert.equal(cleanMentions('@_user_1 在吗', [{ key: 'ou_1', name: '小明' }], 'ou_bot'), '@小明 在吗');
+  assert.equal(cleanMentions('@_user_1 x', [{ key: 'ou_1' }], 'ou_bot'), 'x');
+  assert.equal(cleanMentions('@_user_1 x', [{ key: 'ou_1', name: '小明' }], null), '@小明 x');
+  assert.equal(cleanMentions('', [], 'ou_bot'), '');
+  assert.equal(cleanMentions(null, [], 'ou_bot'), null);
 });
