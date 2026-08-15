@@ -1,29 +1,33 @@
-# dsh-im-bridge
+<div align="center">
 
-> Command your AI from Feishu, WeCom, or Telegram.
->
-> 中文版：[README.md](README.md)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/banner.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/banner.png">
+  <img alt="dsh-im-bridge" src="docs/banner.png" width="720">
+</picture>
 
+<h1>dsh-im-bridge</h1>
+
+[![GitHub stars](https://img.shields.io/github/stars/shaobeichen/dsh-im-bridge)](https://github.com/shaobeichen/dsh-im-bridge/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/shaobeichen/dsh-im-bridge)](https://github.com/shaobeichen/dsh-im-bridge/network/members)
 [![CI](https://github.com/shaobeichen/dsh-im-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/shaobeichen/dsh-im-bridge/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## What is this
+**Command DeepSeek Harness from Feishu, WeCom, or Telegram: remote tasks · result notifications · risk approval**
 
-dsh-im-bridge is an **IM channel for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)**.
+[中文](README.md) | [English](README.en.md)
 
-DeepSeek Harness (DSH) is an AI agent engine that runs locally on your computer: it can read and write code in your working directory, run commands, and execute long tasks. Normally you control it through its web interface.
+</div>
 
-dsh-im-bridge adds a "remote control" to that web interface: once set up, you send messages to a bot in Feishu, WeCom, or Telegram, and those messages become instructions for DSH — with results sent back to your chat.
+**dsh-im-bridge** is an IM channel for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
+DeepSeek Harness (DSH) is an AI agent engine that runs locally on your computer — it can read and write code
+in your working directory, run commands, and execute long tasks. Normally you control it through its web interface.
+dsh-im-bridge adds a "remote control" to that interface: you message a bot in Feishu, WeCom, or Telegram,
+those messages become instructions for DSH, and results come back to your chat.
 
-In short: **your chat window is DSH's control panel** — no need to sit in front of the computer.
+In short: **your chat window is DSH's control panel**.
 
-It helps you:
-
-- Dispatch tasks to your AI even when you're away from the computer
-- When the AI wants to do something risky (like deleting files), it asks you first — nothing happens without your approval
-- When a task finishes, the result is pushed to your chat automatically
-- Long outputs can be exported as a file with a single command
-
-## Supported platforms
+## ✨ Supported platforms
 
 | Platform | Status | Notes |
 |---|---|---|
@@ -32,7 +36,7 @@ It helps you:
 | Telegram | ✅ implemented | No public webhook needed (polling), approval via buttons (bring your own bot token) |
 | DingTalk | planned | — |
 
-## What's inside
+## 📦 What's inside
 
 - **Chat control**: send tasks to the AI from IM, as naturally as chatting
 - **Risk approval**: dangerous operations (file deletion, system commands) require your confirmation — denied by default
@@ -41,7 +45,7 @@ It helps you:
 - **Session management**: `/new` to start, `/status` to check, `/mute` to silence notifications, and more
 - **Access control**: configure who can use it and who is an admin (only admins can approve and change settings)
 
-## Getting started
+## 🚀 Getting started
 
 All three platforms follow the same rhythm: **prepare → start → chat**. You need Node.js 22+; run `npm install` in the repo directory first.
 
@@ -55,7 +59,10 @@ All three platforms follow the same rhythm: **prepare → start → chat**. You 
 
 Step-by-step console screenshots live in each platform's setup doc (linked in the "Prepare" column).
 
-## Package layout
+> [!TIP]
+> Want to try it in the terminal without any IM? Run `node demo/mock-demo.mjs`.
+
+## 🗂 Package layout
 
 | Directory | Description |
 |---|---|
@@ -66,7 +73,7 @@ Step-by-step console screenshots live in each platform's setup doc (linked in th
 | demo | Demo and runner scripts |
 | docs | Documentation |
 
-## Architecture
+## 🧭 Architecture
 
 Message flow:
 
@@ -84,16 +91,16 @@ Result sent back to your chat
 
 For more, see the [docs index](docs/README.md).
 
-## For developers
+## 🤝 For developers
 
 - Want to modify code or add a channel? Start with [CONTRIBUTING.md](CONTRIBUTING.md)
 - Repo rules for AI agents: [AGENTS.md](AGENTS.md)
 - Original product spec: [docs/PRD-v0.5.md](docs/PRD-v0.5.md)
 
-## Security
+## 🔒 Security
 
 This project executes remote instructions and touches real files, so security is a priority. The core principle: denied by default, risky operations require your approval. Security model and vulnerability reporting: [SECURITY.md](SECURITY.md).
 
-## License
+## 📄 License
 
 MIT

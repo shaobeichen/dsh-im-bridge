@@ -1,29 +1,32 @@
-# dsh-im-bridge
+<div align="center">
 
-> 在飞书、企业微信、Telegram 里指挥你的 AI。
->
-> English: [README.en.md](README.en.md)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/banner.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/banner.png">
+  <img alt="dsh-im-bridge" src="docs/banner.png" width="720">
+</picture>
 
+<h1>dsh-im-bridge</h1>
+
+[![GitHub stars](https://img.shields.io/github/stars/shaobeichen/dsh-im-bridge)](https://github.com/shaobeichen/dsh-im-bridge/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/shaobeichen/dsh-im-bridge)](https://github.com/shaobeichen/dsh-im-bridge/network/members)
 [![CI](https://github.com/shaobeichen/dsh-im-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/shaobeichen/dsh-im-bridge/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## 这是什么
+**在飞书 / 企业微信 / Telegram 里指挥 DeepSeek Harness：远程派活 · 结果通知 · 危险操作审批**
 
-dsh-im-bridge 是 **[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的 IM 通道**。
+[English](README.en.md) | [中文](README.md)
 
-DeepSeek Harness（DSH）是一个在你电脑上本地运行的 AI 助手引擎：它能在你的工作目录里读写代码、执行命令、跑长任务，平时你通过它的网页界面来指挥它。
+</div>
 
-dsh-im-bridge 做的事情，就是给这个网页界面加一个"远程遥控器"：装好之后，你在飞书、企业微信或 Telegram 里给机器人发消息，消息就会变成指令交给 DSH 去执行，结果再发回你的聊天里。
+**dsh-im-bridge** 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的 IM 通道。
+DeepSeek Harness（DSH）是一个本地运行的 AI 助手引擎——能在你的工作目录里读写代码、执行命令、
+跑长任务，平时你用网页界面指挥它。dsh-im-bridge 给这个网页界面加了一个"远程遥控器"：
+你在飞书、企业微信或 Telegram 里给机器人发消息，消息变成指令交给 DSH 执行，结果再发回你的聊天里。
 
-简单说：**聊天窗口就是 DSH 的操作台**，不用一直守在电脑前。
+简单说：**聊天窗口就是 DSH 的操作台**。
 
-它能帮你：
-
-- 人不在电脑前，也能给 AI 派活
-- AI 想执行危险操作（比如删文件）时，先问你，你同意它才动手
-- 任务干完了，结果自动发到聊天里
-- 结果太长，用一条命令就能导出完整内容
-
-## 支持平台
+## ✨ 支持平台
 
 | 平台 | 状态 | 说明 |
 |---|---|---|
@@ -32,7 +35,7 @@ dsh-im-bridge 做的事情，就是给这个网页界面加一个"远程遥控�
 | Telegram | ✅ 已实现 | 免公网轮询，审批是按钮（需自己申请 bot token） |
 | 钉钉 | 规划中 | — |
 
-## 里面有什么
+## 📦 里面有什么
 
 - **聊天派活**：在 IM 里直接给 AI 发任务，像聊天一样自然
 - **危险操作审批**：删文件、系统命令这类操作要你确认才执行，默认拒绝
@@ -41,11 +44,9 @@ dsh-im-bridge 做的事情，就是给这个网页界面加一个"远程遥控�
 - **会话管理**：`/new` 建会话、`/status` 看状态、`/mute` 关通知等常用命令
 - **权限控制**：配置哪些人能用、哪些人是管理员（只有管理员能审批和改配置）
 
-## 怎么用
+## 🚀 怎么用
 
 三个平台都是同样的节奏：**准备 → 启动 → 在聊天里开始用**。电脑需要 Node.js 22+，仓库目录先跑一次 `npm install`。
-
-> 想先不接任何 IM，在终端里体验？运行 `node demo/mock-demo.mjs` 即可。
 
 | 平台 | 准备（拿什么） | 启动 | 开始用 |
 |---|---|---|---|
@@ -55,7 +56,10 @@ dsh-im-bridge 做的事情，就是给这个网页界面加一个"远程遥控�
 
 详细的逐屏配置步骤，见各平台的 setup 文档（上面"准备"列已链接）。
 
-## 包结构
+> [!TIP]
+> 想先不接任何 IM，在终端里体验？运行 `node demo/mock-demo.mjs` 即可。
+
+## 🗂 包结构
 
 | 目录 | 说明 |
 |---|---|
@@ -66,7 +70,7 @@ dsh-im-bridge 做的事情，就是给这个网页界面加一个"远程遥控�
 | demo | 演示和运行脚本 |
 | docs | 使用文档 |
 
-## 架构
+## 🧭 架构
 
 消息的流转：
 
@@ -84,16 +88,16 @@ DeepSeek Harness（真正干活）
 
 想深入了解，见 [docs/README.md](docs/README.md) 的文档索引。
 
-## 开发者相关
+## 🤝 开发者相关
 
 - 想改代码、加新渠道，先看 [CONTRIBUTING.md](CONTRIBUTING.md)
 - 给 AI 代理看的仓库规则：[AGENTS.md](AGENTS.md)
 - 原始产品需求文档：[docs/PRD-v0.5.md](docs/PRD-v0.5.md)
 
-## 安全说明
+## 🔒 安全说明
 
 这个项目会执行远程指令、操作真实文件，所以安全是重点。核心原则：默认拒绝，危险操作必须你点头。安全模型和漏洞报告方式见 [SECURITY.md](SECURITY.md)。
 
-## License
+## 📄 License
 
 MIT

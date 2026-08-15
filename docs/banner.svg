@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1a4d"/>
+      <stop offset="0.55" stop-color="#123a8f"/>
+      <stop offset="1" stop-color="#1f6bfe"/>
+    </linearGradient>
+    <linearGradient id="bubble" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dbe7ff"/>
+    </linearGradient>
+    <radialGradient id="mark" cx="0.5" cy="0.4" r="0.7">
+      <stop offset="0" stop-color="#7aa2ff"/>
+      <stop offset="1" stop-color="#1f6bfe"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+
+  <!-- 背景装饰：聊天气泡 -->
+  <g opacity="0.08" fill="#ffffff">
+    <rect x="90" y="470" width="150" height="60" rx="30"/>
+    <rect x="220" y="430" width="110" height="46" rx="23"/>
+    <rect x="1040" y="120" width="150" height="60" rx="30"/>
+    <rect x="910" y="160" width="110" height="46" rx="23"/>
+  </g>
+
+  <!-- 左侧：主图形 —— 聊天气泡里的 DSH 蓝鲸 -->
+  <g transform="translate(150, 150)">
+    <!-- 大聊天气泡 -->
+    <rect x="0" y="0" width="340" height="340" rx="64" fill="url(#bubble)"/>
+    <path d="M 80 340 L 80 404 L 140 340 Z" fill="#dbe7ff"/>
+
+    <!-- 气泡里的鲸鱼（DeepSeek 蓝鲸风格） -->
+    <g transform="translate(30, 52)">
+      <!-- 鲸鱼身体（面朝右） -->
+      <path d="
+        M 20 120
+        C 8 96, 22 66, 70 58
+        C 130 48, 200 56, 236 78
+        C 268 97, 274 118, 262 130
+        C 240 150, 150 152, 80 142
+        C 42 136, 24 132, 20 120 Z
+      " fill="#1f6bfe"/>
+      <!-- 尾鳍（左上） -->
+      <path d="
+        M 22 108
+        C 2 96, -8 82, -16 66
+        C 2 78, 14 88, 26 92 Z
+        M 22 108
+        C 4 120, -6 130, -12 142
+        C 4 128, 14 118, 26 112 Z
+      " fill="#1f6bfe"/>
+      <!-- 背鳍 -->
+      <path d="M 120 62 C 128 40, 150 26, 168 30 C 152 40, 140 52, 136 62 Z" fill="#1f6bfe"/>
+      <!-- 眼睛 -->
+      <circle cx="218" cy="98" r="7" fill="#ffffff"/>
+      <circle cx="220" cy="97" r="3" fill="#0b1a4d"/>
+      <!-- 喷水 -->
+      <path d="M 96 56 C 90 40, 96 28, 106 20" stroke="#7aa2ff" stroke-width="6" stroke-linecap="round" fill="none"/>
+      <path d="M 108 58 C 104 44, 112 34, 122 28" stroke="#7aa2ff" stroke-width="5" stroke-linecap="round" fill="none"/>
+    </g>
+
+    <!-- 气泡尾部三个点（IM 消息感） -->
+    <g fill="#7aa2ff">
+      <circle cx="120" cy="330" r="9"/>
+      <circle cx="152" cy="330" r="9"/>
+      <circle cx="184" cy="330" r="9"/>
+    </g>
+  </g>
+
+  <!-- 右侧：标题 -->
+  <g transform="translate(620, 200)">
+    <text x="0" y="60" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="72" font-weight="800" fill="#ffffff">dsh-im-bridge</text>
+    <text x="4" y="130" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="34" fill="#cfe0ff">把 DeepSeek Harness 装进你的聊天窗口</text>
+    <text x="4" y="180" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="26" fill="#8fb4ff">远程派活 · 结果通知 · 危险操作审批</text>
+
+    <!-- 平台徽章 -->
+    <g font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="22" fill="#0b1a4d">
+      <rect x="0" y="230" width="130" height="52" rx="26" fill="#ffffff"/>
+      <text x="65" y="265" text-anchor="middle" font-weight="600">飞书</text>
+      <rect x="150" y="230" width="170" height="52" rx="26" fill="#ffffff"/>
+      <text x="235" y="265" text-anchor="middle" font-weight="600">企业微信</text>
+      <rect x="340" y="230" width="150" height="52" rx="26" fill="#ffffff"/>
+      <text x="415" y="265" text-anchor="middle" font-weight="600">Telegram</text>
+    </g>
+  </g>
+
+  <!-- 底部小字 -->
+  <text x="640" y="600" text-anchor="middle" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#6d92d8">MIT License · 基于 dsh-im-bridge-PRD 实现</text>
+</svg>
