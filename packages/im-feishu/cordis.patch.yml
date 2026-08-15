@@ -1,0 +1,6 @@
+# dsh-im-feishu bundle patch（dsh.bundle manifest 要求的加载配置）
+# 安装：dsh plugin --profile web add dsh-im-feishu
+# 渠道适配器需要同时安装核心：dsh plugin --profile web add dsh-im dsh-im-feishu
+- insert:
+    - id: im-feishu
+      name: dsh-im-feishu

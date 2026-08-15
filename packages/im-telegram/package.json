@@ -20,5 +20,27 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shaobeichen/dsh-im-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shaobeichen/dsh-im-bridge/issues"
+  },
+  "homepage": "https://github.com/shaobeichen/dsh-im-bridge",
+  "author": "shaobeichen",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "telegram",
+    "telegram-bot",
+    "im-bridge"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
   }
 }

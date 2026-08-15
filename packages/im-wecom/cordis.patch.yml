@@ -1,0 +1,6 @@
+# dsh-im-wecom bundle patch（dsh.bundle manifest 要求的加载配置）
+# 安装：dsh plugin --profile web add dsh-im-wecom
+# 渠道适配器需要同时安装核心：dsh plugin --profile web add dsh-im dsh-im-wecom
+- insert:
+    - id: im-wecom
+      name: dsh-im-wecom
