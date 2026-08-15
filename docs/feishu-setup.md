@@ -4,7 +4,7 @@
 >
 > 全文约 15 分钟。分四部分：
 > ① 准备一个飞书自建应用（一次性配置）
-> ② 启动本机桥接程序
+> ② 安装插件（一条命令）
 > ③ 在飞书里使用（派活 / 审批 / 查状态）
 > ④ 常见问题排查
 
@@ -114,51 +114,34 @@
 
 ---
 
-## ② 启动本机桥接程序（每次使用前）
+## ② 安装插件（一条命令）
 
-### 前置
-
-- 本机装有 Node.js ≥ 22
-- 代码在 `dsh-im-bridge` 目录（本仓库）
-- 装过依赖：在仓库根目录执行过 `npm install`
-
-### 启动命令（真实 DeepSeek 模型）
+**前提**：已装好 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh` 命令可用；提示 `command not found` 先 `npm install -g @deepseek-ai/dsh`）。
 
 ```sh
-cd dsh-im-bridge
-
-FEISHU_APP_ID=cli_你的AppID \
-FEISHU_APP_SECRET=你的AppSecret \
-DEEPSEEK_API_KEY=sk-你的DeepSeekKey \
-node demo/feishu-real.mjs --trust-first
+dsh plugin --profile web add dsh-im dsh-im-feishu -w
 ```
 
-三个环境变量说明：
+> `-w` 是给 pnpm 的（profile 是 workspace 根，pnpm 9 必须显式声明；报 `ERR_PNPM_ADDING_TO_ROOT` 时带上它）。
+
+**配置环境变量**（在启动 `dsh web` 前导出）：
 
 | 变量 | 来源 | 必须 |
 |---|---|---|
 | `FEISHU_APP_ID` | 飞书开放平台 → 凭证与基础信息 | ✅ |
 | `FEISHU_APP_SECRET` | 同上 | ✅ |
-| `DEEPSEEK_API_KEY` | DeepSeek 开放平台 | ✅（不用真实模型可去掉，见下） |
+| `DEEPSEEK_API_KEY` | DeepSeek 开放平台 | ✅ |
 
-可选参数：
-
-| 参数 | 作用 |
-|---|---|
-| `--trust-first` | 首条消息自动信任发消息的人（个人自用推荐；否则走"管理员确认"流程） |
-| `--mock-llm` | 不用真实 DeepSeek，改用脚本化模拟模型（联调飞书通道用，不花钱） |
-
-启动后，终端会每 2 秒刷新一行连接状态：
-
-```
-📡 飞书连接: ✅ long connection ready
+```sh
+export FEISHU_APP_ID=cli_你的AppID
+export FEISHU_APP_SECRET=你的AppSecret
+export DEEPSEEK_API_KEY=sk-你的Key
+dsh web
 ```
 
-看到 ✅ 就是连上了。**保持这个终端开着**，别关。
+启动后飞书通道自动连接（官方长连接，免公网）；在飞书里私聊机器人即可使用。
 
-> 注意：agent 的 shell 只在一个**临时工作区**里运行（终端第一行会打印路径），不会动你电脑上的真实文件。
-
----
+> 想不装进 DSH、克隆仓库直接跑联调脚本？见文末「附：不装进 DSH 的联调方式」。
 
 ## ③ 在飞书里使用
 
@@ -166,8 +149,8 @@ node demo/feishu-real.mjs --trust-first
 
 ### 第一次：信任确认
 
-- 带 `--trust-first` 启动：发第一条消息即自动信任，直接可用
-- 不带：会收到"尚未被授权"提示，需要管理员（配置里 `security.admins` 的人）回复 `/trust feishu:<你的open_id>` 才能用
+- 默认（`trustOnFirstContact: false`）：你的第一条消息会收到"尚未被授权"提示，需要管理员（配置里 `security.admins` 的人）回复 `/trust feishu:<你的open_id>` 授权
+- 个人自用想省事：在 `$DSH_HOME/profiles/web/cordis.patch.yml` 里把 `im.security.trustOnFirstContact` 设为 `true`（首条消息自动信任）
 
 ### 常用操作
 
@@ -194,13 +177,27 @@ node demo/feishu-real.mjs --trust-first
 
 | 现象 | 原因与解决 |
 |---|---|
-| 终端一直显示 `❌ ...`，没有 `long connection ready` | ① App ID/Secret 复制完整吗？② 应用是企业自建吗？③ 长连接只认 `cli_` 开头的 ID |
+| 飞书通道没连上 | ① App ID/Secret 复制完整吗？② 应用是企业自建吗？③ 长连接只认 `cli_` 开头的 ID ④ 环境变量有没有在启动 `dsh web` 前导出 |
 | 连上了，但发消息 bot 不回 | ① 「事件配置」里加了 `im.message.receive_v1` 并**发布**了吗？② 可用范围包含你吗？③ 你私聊的是这个应用吗？ |
-| bot 回消息报"无权限"/"未授权" | 首条消息触发信任流程：用 `--trust-first` 启动，或让管理员 `/trust feishu:<open_id>` |
+| bot 回消息报"无权限"/"未授权" | 首次接触触发信任流程：管理员 `/trust feishu:<open_id>` 授权；或配置 `trustOnFirstContact: true` 自动信任 |
 | 审批卡片显示但**按钮点了没反应** | 「回调配置」页签里没加 `card.action.trigger`（见 ① 第 6 步），或用 `/approve <id> yes` 文本审批 |
 | 发消息报权限错误 | 缺 `im:message:send_as_bot` 权限，或新权限没重新发布版本 |
 | 改了配置不生效 | 每次改权限/事件/回调都要**重新创建版本并发布**，等审批通过 |
 | agent 执行出错 | 终端窗口会打印 agent 日志；把终端输出截图给我排查 |
+
+---
+
+## 附：不装进 DSH 的联调方式（开发者）
+
+需要克隆本仓库 + Node.js 22+：
+
+```sh
+npm install
+FEISHU_APP_ID=cli_xxx FEISHU_APP_SECRET=xxx DEEPSEEK_API_KEY=sk-xxx \
+  node demo/feishu-real.mjs --mode demo
+```
+
+`--mode demo`：首条消息自动信任（个人联调用）；`--mode prod`：严格 allowlist（真实部署基线）。
 
 ---
 

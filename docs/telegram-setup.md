@@ -54,25 +54,27 @@ mute - 关闭通知
 unmute - 开启通知
 ```
 
-## ③ 启动运行器
+## ③ 安装插件（一条命令）
 
-电脑需要 Node.js 22+，仓库目录先跑一次 `npm install`。
+**前提**：已装好 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh` 命令可用；`command not found` 先 `npm install -g @deepseek-ai/dsh`）。
 
 ```sh
-# 演示模式（开发自用）
-TELEGRAM_BOT_TOKEN=123456789:AAH... DEEPSEEK_API_KEY=sk-你的Key \
-  node demo/telegram-real.mjs --mode demo
-
-# 真实部署（必须先配 allowlist/admins，否则拒绝启动）
-IM_ALLOWLIST="telegram:你的数字ID" IM_ADMINS="telegram:你的数字ID" \
-TELEGRAM_BOT_TOKEN=... DEEPSEEK_API_KEY=... \
-  node demo/telegram-real.mjs --mode prod
+dsh plugin --profile web add dsh-im dsh-im-telegram -w
 ```
 
-终端显示 `📡 Telegram 连接: ✅ @你的bot用户名` 即就绪（bot 会自动 polling，免公网）。
+> `-w` 是给 pnpm 的（profile 是 workspace 根，报 `ERR_PNPM_ADDING_TO_ROOT` 时带上）。
 
-> 不用真实模型也可以：`--mock-llm`（仅 demo 模式）。
-> 换用 webhook 模式（需公网 HTTPS + setWebhook）：把 `mode` 改成 `webhook` 并配 `webhookUrl`，一般不推荐，polling 更省事。
+**配置环境变量**（启动 `dsh web` 前导出）：
+
+```sh
+export TELEGRAM_BOT_TOKEN=123456:AAH...
+export DEEPSEEK_API_KEY=sk-xxx
+dsh web
+```
+
+启动后 Telegram 通道自动连接（polling 免公网）；在 Telegram 里私聊你的 bot 即可使用。
+
+> 想不装进 DSH、克隆仓库直接跑联调脚本？见文末「附：不装进 DSH 的联调方式」。
 
 ## ④ 在 Telegram 里使用
 
@@ -112,3 +114,18 @@ mute - 关闭通知
 unmute - 开启通知
 approve - 审批 用法 /approve id yes|no
 ```
+
+
+---
+
+## 附：不装进 DSH 的联调方式（开发者）
+
+需要克隆本仓库 + Node.js 22+：
+
+```sh
+npm install
+TELEGRAM_BOT_TOKEN=123456:AAH... DEEPSEEK_API_KEY=sk-xxx \
+  node demo/telegram-real.mjs --mode demo
+```
+
+`--mode demo`：首条消息自动信任；`--mode prod`：严格 allowlist。

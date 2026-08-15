@@ -81,7 +81,7 @@ caddy reverse-proxy --from your.domain --to localhost:8787
 企微规定：自建应用调用 API **发消息**，服务器出口 IP 必须在白名单（收消息不需要，所以"能收到但回不了"是典型症状）。
 
 **怎么知道自己的 IP（三种方式任选）**：
-1. **启动桥时会自动打印**（推荐）：运行 `wecom-real.mjs` 后，终端会显示
+1. **启动 dsh web 后会自动打印**（推荐）：插件连接企微时会显示
    `⚠️ 你的出口 IP：x.x.x.x` —— 直接抄进后台即可
 2. 浏览器打开 [ip.sb](https://ip.sb) 看当前公网 IP
 3. 发消息失败时桥会解析报错里的 `from ip: x.x.x.x` 提示你
@@ -90,23 +90,28 @@ caddy reverse-proxy --from your.domain --to localhost:8787
 
 > ⚠️ 家庭宽带是动态 IP，变了要回来更新白名单（重新启动桥会再打印一次当前 IP）。
 
-## ⑥ 启动运行器
+## ⑥ 安装插件（一条命令）
+
+**前提**：已装好 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh` 命令可用；`command not found` 先 `npm install -g @deepseek-ai/dsh`）。
 
 ```sh
-# 演示模式（开发自用；--mock-llm 不花钱）
-WECOM_CORP_ID=ww_xxx WECOM_AGENT_ID=1000002 WECOM_SECRET=xxx \
-WECOM_CALLBACK_TOKEN=你的Token WECOM_ENCODING_AES_KEY=43位key \
-DEEPSEEK_API_KEY=sk-xxx \
-node demo/wecom-real.mjs --mode demo
-
-# 真实部署（必须先配 allowlist/admins，否则拒绝启动）
-IM_ALLOWLIST="wecom:userid1" IM_ADMINS="wecom:userid1" \
-WECOM_CORP_ID=... WECOM_AGENT_ID=... WECOM_SECRET=... \
-WECOM_CALLBACK_TOKEN=... WECOM_ENCODING_AES_KEY=... DEEPSEEK_API_KEY=... \
-node demo/wecom-real.mjs --mode prod
+dsh plugin --profile web add dsh-im dsh-im-wecom -w
 ```
 
-终端显示 `📡 企微连接: ✅ listening :8787` 即就绪。
+> `-w` 是给 pnpm 的（profile 是 workspace 根，报 `ERR_PNPM_ADDING_TO_ROOT` 时带上）。
+
+**配置环境变量**（启动 `dsh web` 前导出，5 个企微凭据 + DeepSeek key）：
+
+```sh
+export WECOM_CORP_ID=ww_xxx WECOM_AGENT_ID=1000002 WECOM_SECRET=xxx
+export WECOM_CALLBACK_TOKEN=xxx WECOM_ENCODING_AES_KEY=43位key
+export DEEPSEEK_API_KEY=sk-xxx
+dsh web
+```
+
+启动后企微通道自动连接（回调服务监听本地端口，公网隧道需保持运行）；在手机企微里打开应用即可使用。
+
+> 想不装进 DSH、克隆仓库直接跑联调脚本？见文末「附：不装进 DSH 的联调方式」。
 
 ## ⑦ 在企微里使用
 
@@ -129,3 +134,19 @@ node demo/wecom-real.mjs --mode prod
 | 审批没有按钮 | 正常——企微应用消息无按钮，用 `/approve <id> yes\|no` |
 | 发消息报错 errcode | 看终端错误码：**60020**（IP 不在白名单 → 按第 ⑤ 步加「企业可信 IP」，桥会打印当前 IP）/ 60111（secret 错）/ 301002（可见范围） |
 
+
+
+---
+
+## 附：不装进 DSH 的联调方式（开发者）
+
+需要克隆本仓库 + Node.js 22+：
+
+```sh
+npm install
+WECOM_CORP_ID=ww_xxx WECOM_AGENT_ID=1000002 WECOM_SECRET=xxx \
+WECOM_CALLBACK_TOKEN=xxx WECOM_ENCODING_AES_KEY=43位key \
+DEEPSEEK_API_KEY=sk-xxx node demo/wecom-real.mjs --mode demo
+```
+
+`--mode demo`：首条消息自动信任；`--mode prod`：严格 allowlist。
