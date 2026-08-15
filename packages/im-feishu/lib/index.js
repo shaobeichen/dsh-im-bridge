@@ -14,6 +14,9 @@
 
 import z from '@deepseek-ai/schemastery';
 import * as lark from '@larksuiteoapi/node-sdk';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 
 const name = 'im-feishu';
 const inject = ['im'];
@@ -25,10 +28,28 @@ const Config = z.object({
   logLevel: z.string().default('warn'), // SDK 日志级别（'error'|'warn'|'info'|'debug'）
 });
 
-/** 解析密钥引用：'env:NAME' → process.env.NAME。 */
-export function resolveSecret(value) {
+/** env 变量名 → 扫码凭据文件字段（bin/feishu-qr.mjs 的产物）。 */
+const ENV_CRED_FIELDS = { FEISHU_APP_ID: 'appId', FEISHU_APP_SECRET: 'appSecret' };
+/** 扫码接入产物路径（相对 $DSH_HOME）。 */
+export const QR_CREDENTIALS_REL = join('dsh-im', 'feishu-credentials.json');
+
+/**
+ * 解析密钥引用：'env:NAME' → 环境变量；环境变量为空时回退扫码接入产物
+ * （$DSH_HOME/dsh-im/feishu-credentials.json，由 dsh-im-feishu-qr 写入）。
+ * 环境变量优先，扫码只是缺省回退，两种方式共存。
+ */
+export function resolveSecret(value, { home, read = readFileSync, env = process.env } = {}) {
   if (typeof value === 'string' && value.startsWith('env:')) {
-    return process.env[value.slice(4)] ?? '';
+    const envName = value.slice(4);
+    const fromEnv = env[envName];
+    if (fromEnv) return fromEnv;
+    const credFile = join(home ?? env.DSH_HOME ?? join(homedir(), '.dsh'), QR_CREDENTIALS_REL);
+    try {
+      const creds = JSON.parse(read(credFile, 'utf8'));
+      return creds[ENV_CRED_FIELDS[envName]] ?? '';
+    } catch {
+      return ''; // 无凭据文件：回到「缺凭据 → 优雅断开」
+    }
   }
   return value;
 }

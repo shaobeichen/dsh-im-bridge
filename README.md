@@ -59,7 +59,7 @@ npm install -g @deepseek-ai/dsh     # 全局安装；验证：dsh --version
 
 | 平台 | 一条命令安装 | 准备（拿什么） | 开始用 |
 |---|---|---|---|
-| 飞书 | `dsh plugin --profile web add dsh-im dsh-im-feishu` | 在[开放平台](https://open.feishu.cn/app)建企业自建应用，拿 App ID / App Secret（[图文指引](docs/feishu-setup.md)） | 配好凭据重启 `dsh web`，在飞书私聊机器人：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |
+| 飞书 | `dsh plugin --profile web add dsh-im dsh-im-feishu` | **扫码接入（推荐）**：`npx -y dsh-im-feishu-qr` 扫码一键建应用、预填权限；或手动在[开放平台](https://open.feishu.cn/app)建企业自建应用拿 App ID / App Secret（[图文指引](docs/feishu-setup.md)） | 配好凭据重启 `dsh web`，在飞书私聊机器人：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |
 | 企业微信 | `dsh plugin --profile web add dsh-im dsh-im-wecom` | 在[管理后台](https://work.weixin.qq.com/wework_admin/frame)建自建应用，拿 CorpID / AgentId / Secret，并配置回调地址和可信 IP（[指引](docs/wecom-setup.md)） | 配好凭据重启 `dsh web`，手机"工作台"打开应用：`/new` → 派活；审批回复 `/approve <id> yes`（企微无按钮） |
 | Telegram | `dsh plugin --profile web add dsh-im dsh-im-telegram` | 用 [@BotFather](https://t.me/BotFather) 建 bot，拿 token（[图文指引](docs/telegram-setup.md)） | 配好凭据重启 `dsh web`，私聊 bot：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |
 

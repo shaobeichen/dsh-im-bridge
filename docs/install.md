@@ -32,7 +32,7 @@ dsh plugin --profile web add dsh-im dsh-im-feishu -w       # 飞书
 
 | 渠道 | 环境变量 | 说明 |
 |---|---|---|
-| 飞书 | `FEISHU_APP_ID` / `FEISHU_APP_SECRET` | 开放平台自建应用，配置步骤见 [`feishu-setup.md`](feishu-setup.md) |
+| 飞书 | `FEISHU_APP_ID` / `FEISHU_APP_SECRET` | **推荐改用扫码接入**：`npx -y dsh-im-feishu-qr` 扫码自动建应用并写凭据文件，无需环境变量（环境变量仍优先）；手动方式见 [`feishu-setup.md`](feishu-setup.md) |
 | 企业微信 | `WECOM_CORP_ID` / `WECOM_AGENT_ID` / `WECOM_SECRET` / `WECOM_CALLBACK_TOKEN` / `WECOM_ENCODING_AES_KEY` | 管理后台自建应用，配置步骤见 [`wecom-setup.md`](wecom-setup.md) |
 | Telegram | `TELEGRAM_BOT_TOKEN` | BotFather 创建，配置步骤见 [`telegram-setup.md`](telegram-setup.md) |
 

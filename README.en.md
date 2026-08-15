@@ -60,7 +60,7 @@ All three platforms follow the same path: **install the plugin → configure cre
 
 | Platform | One-command install | Prepare | Use |
 |---|---|---|---|
-| Feishu | `dsh plugin --profile web add dsh-im dsh-im-feishu` | Create an enterprise self-built app on the [Open Platform](https://open.feishu.cn/app), get App ID / App Secret ([guide](docs/feishu-setup.md)) | Configure credentials, restart `dsh web`, private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
+| Feishu | `dsh plugin --profile web add dsh-im dsh-im-feishu` | **QR setup (recommended)**: run `npx -y dsh-im-feishu-qr` and scan — creates the app and pre-fills permissions; or create an enterprise self-built app on the [Open Platform](https://open.feishu.cn/app) and get App ID / App Secret ([guide](docs/feishu-setup.md)) | Configure credentials, restart `dsh web`, private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
 | WeCom | `dsh plugin --profile web add dsh-im dsh-im-wecom` | Create a self-built app in the [admin console](https://work.weixin.qq.com/wework_admin/frame), get CorpID / AgentId / Secret, configure callback URL and Trusted IP ([guide](docs/wecom-setup.md)) | Configure credentials, restart `dsh web`, open the app from "Workbench": `/new` → send tasks; approval comes as text — reply `/approve <id> yes` (no buttons) |
 | Telegram | `dsh plugin --profile web add dsh-im dsh-im-telegram` | Create a bot with [@BotFather](https://t.me/BotFather), get the token ([guide](docs/telegram-setup.md)) | Configure credentials, restart `dsh web`, private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
 

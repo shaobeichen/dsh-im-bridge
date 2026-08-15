@@ -4,6 +4,9 @@
   "description": "飞书渠道适配器（dsh-im 插件家族，experimental）：WebSocket 长连接免公网 + 审批卡片按钮。需要真实飞书自建应用凭据，未经 CI 实测。",
   "type": "module",
   "main": "lib/index.js",
+  "bin": {
+    "dsh-im-feishu-qr": "bin/feishu-qr.mjs"
+  },
   "exports": {
     ".": {
       "default": "./lib/index.js"
@@ -12,11 +15,13 @@
   },
   "files": [
     "lib",
+    "bin",
     "cordis.patch.yml"
   ],
   "license": "MIT",
   "dependencies": {
-    "@larksuiteoapi/node-sdk": "^1.73.0"
+    "@larksuiteoapi/node-sdk": "^1.73.0",
+    "qrcode-terminal": "^0.12.0"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
