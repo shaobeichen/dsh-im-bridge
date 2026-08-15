@@ -1,6 +1,6 @@
 {
   "name": "dsh-im-feishu",
-  "version": "0.1.0-rc.1",
+  "version": "1.0.2",
   "description": "飞书渠道适配器（dsh-im 插件家族，experimental）：WebSocket 长连接免公网 + 审批卡片按钮。需要真实飞书自建应用凭据，未经 CI 实测。",
   "type": "module",
   "main": "lib/index.js",
@@ -20,7 +20,7 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
-    "dsh-im": "^0.1.0-rc.1"
+    "dsh-im": "^1.0.2"
   },
   "engines": {
     "node": ">=22"

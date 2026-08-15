@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### 工程
+
+- 仓库根变成可安装 bundle（根 `cordis.patch.yml` 注册 4 个插件 + 根依赖指向 npm 发布包）：`dsh plugin add github:shaobeichen/dsh-im-bridge` 一键装齐核心+三渠道（awesome-dsh-plugin / dshmarket 收录路径打通）
+- 版本号与 npm 对齐（4 包 + 根包 1.0.2，渠道 peer `^1.0.2`）；发布 workflow 现在会在 Release 后**把版本同步自动提交回仓库**（零本地命令，仓库 package.json 永远与 npm 一致）
+
 ### 修复
 
 - **安全门体验**：管理员（`security.admins`）隐式放行，不再要求重复写 `allowlist`——普通用户零配置，首接触由管理员一键 `/trust` 确认（FR-8.2/9.2）；全空配置时启动给出双语引导提示（`im.security.admins: ["平台:userId"]`），未授权回复附上同样的可抄配置

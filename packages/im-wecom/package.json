@@ -1,6 +1,6 @@
 {
   "name": "dsh-im-wecom",
-  "version": "0.1.0-rc.1",
+  "version": "1.0.2",
   "description": "企业微信 渠道适配器（dsh-im 插件家族）。",
   "type": "module",
   "main": "lib/index.js",
@@ -20,7 +20,7 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
-    "dsh-im": "^0.1.0-rc.1"
+    "dsh-im": "^1.0.2"
   },
   "engines": {
     "node": ">=22"

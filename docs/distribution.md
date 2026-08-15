@@ -8,7 +8,8 @@
 
 > 关键链路：dsh-market 的数据源就是 awesome-dsh-plugin 的 `plugins.json`，
 > 所以 **③ 进了 awesome 列表 = 自动进 dsh-market**，不需要单独提交。
-> awesome 列表要求：仓库声明 `dsh.bundle`（✅ 已补）+ `dsh-plugin` topic（① 做）+ 真实代码 + 活跃维护。
+> awesome 列表要求：仓库声明 `dsh.bundle`（✅ 仓库根已补：根 `cordis.patch.yml` 注册 4 个插件，根依赖指向 npm 发布包）+ `dsh-plugin` topic（① 做）+ 真实代码 + 活跃维护。
+> 一键安装：`dsh plugin --profile web add github:shaobeichen/dsh-im-bridge` 即装齐 4 个插件。
 
 ---
 
@@ -24,7 +25,7 @@ dsh-plugin  deepseek-harness  im-bridge  feishu  lark  wecom  telegram  ai-agent
 
 ## ② 发布 npm（GitHub 打 Release 即自动发布，零本地命令）
 
-仓库已带 `.github/workflows/npm-publish.yml`：**在 GitHub 手动创建一个 Release，workflow 就会自动：测试 → 把 tag 版本同步进 4 个包的 package.json → 按顺序发布到 npm**。
+仓库已带 `.github/workflows/npm-publish.yml`：**在 GitHub 手动创建一个 Release，workflow 就会自动：测试 → 把 tag 版本同步进 4 个包 + 根包的 package.json → 按顺序发布到 npm → 把版本同步提交回仓库（零本地命令，仓库 package.json 永远与 npm 已发布版本一致）**。
 
 **一次性配置（10 分钟，只需一次）**：
 
@@ -41,7 +42,7 @@ dsh-plugin  deepseek-harness  im-bridge  feishu  lark  wecom  telegram  ai-agent
 
 **说明**：
 
-- tag 里的版本号会自动写进 4 个包的 package.json（`v0.1.0` → `0.1.0`），不用手动改
+- tag 里的版本号会自动写进 4 个包的 package.json 和根包（`v0.1.0` → `0.1.0`），发布成功后自动提交回仓库，不用手动改
 - 发布顺序固定：先 `dsh-im` 核心，再三个渠道
 - 某包已发布过同版本时会自动跳过（重跑安全）
 - 正式版本号（如 `0.1.0`）默认就是 npm 的 latest，`dsh plugin add dsh-im` 直接能装

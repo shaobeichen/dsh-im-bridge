@@ -17,6 +17,9 @@ npm install -g @deepseek-ai/dsh    # 全局安装；验证 dsh --version
 dsh plugin --profile web add dsh-im dsh-im-feishu -w       # 飞书
 # dsh plugin --profile web add dsh-im dsh-im-wecom -w      # 企业微信
 # dsh plugin --profile web add dsh-im dsh-im-telegram -w   # Telegram
+
+# 或者一次装齐三个渠道（等价上面三条，从 dshmarket 一键安装也是这条）
+# dsh plugin --profile web add github:shaobeichen/dsh-im-bridge -w
 ```
 
 装完插件自带默认配置（`dsh.bundle` 自动应用），**不需要手动改配置文件**。

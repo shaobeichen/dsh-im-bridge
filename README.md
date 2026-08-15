@@ -55,6 +55,8 @@ npm install -g @deepseek-ai/dsh     # 全局安装；验证：dsh --version
 
 三个平台都是同一条路：**装插件 → 配凭据 → 重启 → 在聊天里用**。不用克隆本仓库、不用写代码。
 
+> 想一次装齐三个渠道（或从 dshmarket 一键安装）？`dsh plugin --profile web add github:shaobeichen/dsh-im-bridge` 等价于同时安装核心 + 飞书 + 企微 + Telegram；没配凭据的渠道会自动显示"未连接"，不影响其他渠道使用。
+
 | 平台 | 一条命令安装 | 准备（拿什么） | 开始用 |
 |---|---|---|---|
 | 飞书 | `dsh plugin --profile web add dsh-im dsh-im-feishu` | 在[开放平台](https://open.feishu.cn/app)建企业自建应用，拿 App ID / App Secret（[图文指引](docs/feishu-setup.md)） | 配好凭据重启 `dsh web`，在飞书私聊机器人：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |

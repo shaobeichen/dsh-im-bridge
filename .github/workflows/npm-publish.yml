@@ -1,7 +1,8 @@
 name: npm publish
 
 # 手动在 GitHub 打 Release（tag 形如 v0.1.0）即触发：
-#   测试 → 把 tag 版本同步进 4 个包的 package.json → 按顺序发布到 npm。
+#   测试 → 把 tag 版本同步进 4 个包的 package.json → 按顺序发布到 npm
+#   → 把版本同步提交回仓库（仓库 package.json 永远与 npm 已发布版本一致）。
 # 不需要在本地跑任何发布命令。
 #
 # 首次配置（一次性）：
@@ -10,13 +11,16 @@ name: npm publish
 #
 # 发布流程（以后每次都一样）：
 #   1. GitHub 仓库 → Releases → Draft a new release
-#   2. Choose a tag → 新建 v0.1.0（版本号随意，但必须是 semver，如 v0.1.0 / v1.2.3）
+#   2. Choose a tag → 新建 v1.0.3（版本号随意，但必须是 semver，如 v0.1.0 / v1.2.3）
 #   3. 写标题/说明 → Publish release
-#   4. 到 Actions 页看发布进度，完成后 npm 上即可见
+#   4. 到 Actions 页看发布进度，完成后 npm 上即可见，仓库 package.json 也自动同步
 
 on:
   release:
     types: [published]
+
+permissions:
+  contents: write
 
 jobs:
   publish:
@@ -30,7 +34,7 @@ jobs:
       - run: npm ci
       - name: 测试
         run: npm test
-      - name: 同步版本（tag → 4 包 version + 渠道 peerDependency 范围）
+      - name: 同步版本（tag → 4 包 version + 渠道 peer 范围 + 根包 version/依赖范围）
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
@@ -51,7 +55,16 @@ jobs:
             }
             fs.writeFileSync(f, JSON.stringify(d, null, 2) + '\n');
           }
-          console.log('已同步 4 包版本与 peer 范围到', v);
+          // 根包（dsh-im-bridge）：版本与对 4 个发布包的依赖范围同步，
+          // 这样 dsh plugin add github:shaobeichen/dsh-im-bridge 装到的永远是最新发布版
+          const root = 'package.json';
+          const rd = JSON.parse(fs.readFileSync(root, 'utf8'));
+          rd.version = v;
+          for (const dep of ['dsh-im', 'dsh-im-telegram', 'dsh-im-feishu', 'dsh-im-wecom']) {
+            if (rd.dependencies && rd.dependencies[dep]) rd.dependencies[dep] = `^${v}`;
+          }
+          fs.writeFileSync(root, JSON.stringify(rd, null, 2) + '\n');
+          console.log('已同步 4 包 + 根包版本、peer 与依赖范围到', v);
           EOF
       - name: 重建依赖树（workspace 链接匹配新版本/新 peer）
         run: npm install --no-audit --no-fund
@@ -90,4 +103,15 @@ jobs:
             echo "已存在，跳过"
           else
             npm publish --workspace dsh-im-wecom
+          fi
+      - name: 把版本同步提交回仓库（零本地命令）
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json packages/im/package.json packages/im-telegram/package.json packages/im-feishu/package.json packages/im-wecom/package.json
+          if git diff --cached --quiet; then
+            echo "package.json 版本与 tag 一致，无变更可提交"
+          else
+            git commit -m "chore: sync versions to ${{ env.IM_VERSION }} (release ${{ github.event.release.tag_name }})"
+            git push
           fi

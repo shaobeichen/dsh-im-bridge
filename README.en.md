@@ -56,6 +56,8 @@ npm install -g @deepseek-ai/dsh     # global install; verify with: dsh --version
 
 All three platforms follow the same path: **install the plugin → configure credentials → restart → chat**. No need to clone this repo or write code.
 
+> Want all three channels at once (or one-click install from dshmarket)? `dsh plugin --profile web add github:shaobeichen/dsh-im-bridge` is equivalent to installing the core + Feishu + WeCom + Telegram together; channels without credentials just show "disconnected" and don't affect the others.
+
 | Platform | One-command install | Prepare | Use |
 |---|---|---|---|
 | Feishu | `dsh plugin --profile web add dsh-im dsh-im-feishu` | Create an enterprise self-built app on the [Open Platform](https://open.feishu.cn/app), get App ID / App Secret ([guide](docs/feishu-setup.md)) | Configure credentials, restart `dsh web`, private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
