@@ -37,66 +37,28 @@ dsh-im-bridge 是一个"聊天机器人"中间件。装好之后，你在飞书�
 
 ## 怎么用
 
-先选平台，按对应的章节来。三个平台的步骤都是：**准备 → 启动 → 在聊天里开始用**。
+三个平台都是同样的节奏：**准备 → 启动 → 在聊天里开始用**。电脑需要 Node.js 22+，仓库目录先跑一次 `npm install`。
 
 > 想先不接任何 IM，在终端里体验？运行 `node demo/mock-demo.mjs` 即可。
 
-### 飞书
+| 平台 | 准备（拿什么） | 启动 | 开始用 |
+|---|---|---|---|
+| 飞书 | 在[开放平台](https://open.feishu.cn/app)建企业自建应用，拿 App ID / App Secret（[图文指引](docs/feishu-setup.md)） | 设好 `FEISHU_APP_ID`、`FEISHU_APP_SECRET`、`DEEPSEEK_API_KEY`，然后运行<br>`node demo/feishu-real.mjs --mode demo` | 私聊机器人：`/new` 建会话 → 直接派活；危险操作弹审批卡片，点按钮放行 |
+| 企业微信 | 在[管理后台](https://work.weixin.qq.com/wework_admin/frame)建自建应用，拿 CorpID / AgentId / Secret，并配置回调地址和可信 IP（[指引](docs/wecom-setup.md)） | 设好 `WECOM_CORP_ID`、`WECOM_AGENT_ID`、`WECOM_SECRET`、`WECOM_CALLBACK_TOKEN`、`WECOM_ENCODING_AES_KEY`，然后运行<br>`node demo/wecom-real.mjs --mode demo` | 手机"工作台"打开应用：`/new` → 派活；危险操作收到审批文本，回复 `/approve <id> yes`（企微无按钮） |
+| Telegram | 用 [@BotFather](https://t.me/BotFather) 建 bot，拿 token | 设好 `TELEGRAM_BOT_TOKEN`，然后运行<br>`node demo/telegram-real.mjs --mode demo` | 私聊 bot：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |
 
-**准备**：在[飞书开放平台](https://open.feishu.cn/app)建一个企业自建应用，拿到 App ID 和 App Secret。详细图文指引：[docs/feishu-setup.md](docs/feishu-setup.md)
-
-**启动**（电脑需要 Node.js 22+，仓库目录先跑一次 `npm install`）：
-
-```sh
-FEISHU_APP_ID=你的AppID FEISHU_APP_SECRET=你的AppSecret DEEPSEEK_API_KEY=sk-你的Key \
-  node demo/feishu-real.mjs --mode demo
-```
-
-看到"连接成功"后，在飞书里搜索你的机器人并私聊它：
-
-- 发 `/new` 创建会话，然后直接发任务，比如"列出当前目录的内容"
-- 遇到危险操作，机器人发审批卡片，点按钮放行或拒绝
-- `/status` 看状态，`/log` 导出完整结果
-
-### 企业微信
-
-**准备**：在[企业微信管理后台](https://work.weixin.qq.com/wework_admin/frame)建自建应用，拿到 CorpID / AgentId / Secret，并配置"接收消息"的回调地址和"企业可信 IP"。详细步骤：[docs/wecom-setup.md](docs/wecom-setup.md)
-
-**启动**：
-
-```sh
-WECOM_CORP_ID=你的企业ID WECOM_AGENT_ID=1000002 WECOM_SECRET=你的Secret \
-WECOM_CALLBACK_TOKEN=你的Token WECOM_ENCODING_AES_KEY=你的43位Key \
-DEEPSEEK_API_KEY=sk-你的Key node demo/wecom-real.mjs --mode demo
-```
-
-在手机企微的"工作台"里打开你的应用：
-
-- 发 `/new` 创建会话，然后直接发任务
-- 危险操作会收到审批文本，回复 `/approve <id> yes` 放行（企微不支持按钮）
-
-### Telegram
-
-**准备**：找 [@BotFather](https://t.me/BotFather) 创建一个 bot，拿到 bot token。
-
-**启动**：
-
-```sh
-TELEGRAM_BOT_TOKEN=你的token node demo/telegram-real.mjs --mode demo
-```
-
-在 Telegram 里私聊你的 bot，用法与飞书相同（审批是按钮）。
+详细的逐屏配置步骤，见各平台的 setup 文档（上面"准备"列已链接）。
 
 ## 包结构
 
-```
-packages/im            核心：聊天消息处理、会话管理、审批、通知
-packages/im-telegram   Telegram 适配器
-packages/im-feishu     飞书适配器
-packages/im-wecom      企业微信适配器
-demo                   演示和运行脚本
-docs                   使用文档
-```
+| 目录 | 说明 |
+|---|---|
+| packages/im | 核心：聊天消息处理、会话管理、审批、通知 |
+| packages/im-telegram | Telegram 适配器 |
+| packages/im-feishu | 飞书适配器 |
+| packages/im-wecom | 企业微信适配器 |
+| demo | 演示和运行脚本 |
+| docs | 使用文档 |
 
 ## 架构
 

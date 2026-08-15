@@ -37,66 +37,28 @@ It helps you:
 
 ## Getting started
 
-Pick your platform and follow that section. All three follow the same rhythm: **prepare → start → chat**.
+All three platforms follow the same rhythm: **prepare → start → chat**. You need Node.js 22+; run `npm install` in the repo directory first.
 
 > Want to try it in the terminal without any IM? Run `node demo/mock-demo.mjs`.
 
-### Feishu
+| Platform | Prepare | Start | Use |
+|---|---|---|---|
+| Feishu | Create an enterprise self-built app on the [Open Platform](https://open.feishu.cn/app), get App ID / App Secret ([guide](docs/feishu-setup.md)) | Set `FEISHU_APP_ID`, `FEISHU_APP_SECRET`, `DEEPSEEK_API_KEY`, then run<br>`node demo/feishu-real.mjs --mode demo` | Private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
+| WeCom | Create a self-built app in the [admin console](https://work.weixin.qq.com/wework_admin/frame), get CorpID / AgentId / Secret, configure callback URL and Trusted IP ([guide](docs/wecom-setup.md)) | Set `WECOM_CORP_ID`, `WECOM_AGENT_ID`, `WECOM_SECRET`, `WECOM_CALLBACK_TOKEN`, `WECOM_ENCODING_AES_KEY`, then run<br>`node demo/wecom-real.mjs --mode demo` | Open the app from "Workbench": `/new` → send tasks; approval comes as text — reply `/approve <id> yes` (no buttons) |
+| Telegram | Create a bot with [@BotFather](https://t.me/BotFather), get the token | Set `TELEGRAM_BOT_TOKEN`, then run<br>`node demo/telegram-real.mjs --mode demo` | Private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
 
-**Prepare**: create an enterprise self-built app on the [Feishu Open Platform](https://open.feishu.cn/app) and get the App ID and App Secret. Illustrated guide: [docs/feishu-setup.md](docs/feishu-setup.md)
-
-**Start** (Node.js 22+; run `npm install` in the repo directory first):
-
-```sh
-FEISHU_APP_ID=your-app-id FEISHU_APP_SECRET=your-secret DEEPSEEK_API_KEY=sk-your-key \
-  node demo/feishu-real.mjs --mode demo
-```
-
-Once "connected", search for your bot in Feishu and start a private chat:
-
-- Send `/new` to create a session, then send tasks like "list the files in the current directory"
-- Risky operations send an approval card — tap a button to allow or deny
-- `/status` to check state, `/log` to export the full output
-
-### WeCom (WeChat Work)
-
-**Prepare**: create a self-built app in the [WeCom admin console](https://work.weixin.qq.com/wework_admin/frame), get CorpID / AgentId / Secret, configure the "Receive messages" callback URL and "Trusted IP". Full guide: [docs/wecom-setup.md](docs/wecom-setup.md)
-
-**Start**:
-
-```sh
-WECOM_CORP_ID=your-corpid WECOM_AGENT_ID=1000002 WECOM_SECRET=your-secret \
-WECOM_CALLBACK_TOKEN=your-token WECOM_ENCODING_AES_KEY=your-43-char-key \
-DEEPSEEK_API_KEY=sk-your-key node demo/wecom-real.mjs --mode demo
-```
-
-Open your app from "Workbench" in the WeCom mobile app:
-
-- Send `/new` to create a session, then send tasks directly
-- Risky operations come as a text notice — reply `/approve <id> yes` to allow (WeCom has no buttons)
-
-### Telegram
-
-**Prepare**: create a bot with [@BotFather](https://t.me/BotFather) and get the bot token.
-
-**Start**:
-
-```sh
-TELEGRAM_BOT_TOKEN=your-token node demo/telegram-real.mjs --mode demo
-```
-
-Private-chat your bot in Telegram. Usage is the same as Feishu (approval via buttons).
+Step-by-step console screenshots live in each platform's setup doc (linked in the "Prepare" column).
 
 ## Package layout
 
-```
-packages/im            Core: message handling, sessions, approvals, notifications
-packages/im-telegram   Telegram adapter
-packages/im-feishu     Feishu adapter
-packages/im-wecom      WeCom adapter
-demo                   Demo and runner scripts
-docs                   Documentation
-```
+| Directory | Description |
+|---|---|
+| packages/im | Core: message handling, sessions, approvals, notifications |
+| packages/im-telegram | Telegram adapter |
+| packages/im-feishu | Feishu adapter |
+| packages/im-wecom | WeCom adapter |
+| demo | Demo and runner scripts |
+| docs | Documentation |
 
 ## Architecture
 
