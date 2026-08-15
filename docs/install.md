@@ -80,7 +80,7 @@ dsh web
 
 完整配置项见 [`example-cordis.patch.yml`](example-cordis.patch.yml)。
 
-> 多用户部署建议用 `--mode prod` 的严格基线（强制 allowlist、禁自动信任），见 [`modes.md`](modes.md)。
+> 多用户部署的严格基线：配置 `allowlist` / `admins`（默认空 = 全禁）、保持 `trustOnFirstContact: false`（首接触走管理员确认）。运行器形态的 demo/prod 模式见 [`modes.md`](modes.md)。
 
 ## 5. 命令速查
 
