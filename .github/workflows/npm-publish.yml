@@ -112,6 +112,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "package.json 版本与 tag 一致，无变更可提交"
           else
+            # release 事件下 checkout 处于 detached HEAD，必须显式推到分支名
             git commit -m "chore: sync versions to ${{ env.IM_VERSION }} (release ${{ github.event.release.tag_name }})"
-            git push
+            git push origin HEAD:main
           fi
