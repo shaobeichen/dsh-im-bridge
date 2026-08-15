@@ -1,6 +1,6 @@
 {
   "name": "dsh-im-bridge",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "description": "统一 IM 桥插件家族（monorepo）：核心 dsh-im + 渠道适配器（telegram / feishu）。让 DeepSeek Harness 通过 IM 可指挥、可通知、可审批。",
   "type": "module",
@@ -8,11 +8,11 @@
     "packages/*"
   ],
   "dependencies": {
-    "dsh-im": "^1.0.4",
-    "dsh-im-telegram": "^1.0.4",
-    "dsh-im-feishu": "^1.0.4",
-    "dsh-im-wecom": "^1.0.4",
-    "dsh-im-weixin": "^1.0.4"
+    "dsh-im": "^1.0.5",
+    "dsh-im-telegram": "^1.0.5",
+    "dsh-im-feishu": "^1.0.5",
+    "dsh-im-wecom": "^1.0.5",
+    "dsh-im-weixin": "^1.0.5"
   },
   "files": [
     "cordis.patch.yml"

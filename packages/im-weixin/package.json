@@ -1,6 +1,6 @@
 {
   "name": "dsh-im-weixin",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "微信渠道适配器（dsh-im 插件家族）：腾讯 iLink 个人微信机器人，官方协议 getupdates 长轮询免公网；npx -y dsh-im-weixin-qr 扫码绑定。",
   "type": "module",
   "main": "lib/index.js",
@@ -33,7 +33,7 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
-    "dsh-im": "^1.0.4"
+    "dsh-im": "^1.0.5"
   },
   "engines": {
     "node": ">=22"
