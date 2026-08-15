@@ -30,14 +30,31 @@ jobs:
       - run: npm ci
       - name: 测试
         run: npm test
-      - name: 同步版本（release tag → 4 个包 package.json）
+      - name: 同步版本（tag → 4 包 version + 渠道 peerDependency 范围）
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           VERSION="${RELEASE_TAG#v}"
           echo "发布版本: $VERSION"
           echo "IM_VERSION=$VERSION" >> "$GITHUB_ENV"
-          npm version "$VERSION" --workspaces --no-git-tag-version
+          node - "$VERSION" <<'EOF'
+          const fs = require('fs');
+          const v = process.argv[2];
+          const pkgs = ['packages/im', 'packages/im-telegram', 'packages/im-feishu', 'packages/im-wecom'];
+          for (const dir of pkgs) {
+            const f = `${dir}/package.json`;
+            const d = JSON.parse(fs.readFileSync(f, 'utf8'));
+            d.version = v;
+            // 渠道包对核心的 peer 范围必须同步，否则 npm 会去 registry 找旧版本（404）
+            if (d.peerDependencies && d.peerDependencies['dsh-im']) {
+              d.peerDependencies['dsh-im'] = `^${v}`;
+            }
+            fs.writeFileSync(f, JSON.stringify(d, null, 2) + '\n');
+          }
+          console.log('已同步 4 包版本与 peer 范围到', v);
+          EOF
+      - name: 重建依赖树（workspace 链接匹配新版本/新 peer）
+        run: npm install --no-audit --no-fund
       - name: 发布 dsh-im（核心，先发）
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
