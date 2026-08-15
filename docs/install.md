@@ -14,12 +14,14 @@ npm install -g @deepseek-ai/dsh    # 全局安装；验证 dsh --version
 
 ```sh
 # 选一个渠道（可多个一起装）
-dsh plugin --profile web add dsh-im dsh-im-feishu      # 飞书
-# dsh plugin --profile web add dsh-im dsh-im-wecom     # 企业微信
-# dsh plugin --profile web add dsh-im dsh-im-telegram  # Telegram
+dsh plugin --profile web add dsh-im dsh-im-feishu -w       # 飞书
+# dsh plugin --profile web add dsh-im dsh-im-wecom -w      # 企业微信
+# dsh plugin --profile web add dsh-im dsh-im-telegram -w   # Telegram
 ```
 
 装完插件自带默认配置（`dsh.bundle` 自动应用），**不需要手动改配置文件**。
+
+> 如果报 `ERR_PNPM_ADDING_TO_ROOT`（pnpm 9 在 workspace 根的限制），在命令末尾加 `-w`（`--workspace-root`）即可——上面已默认带上。
 
 ## 2. 配凭据（环境变量）
 
