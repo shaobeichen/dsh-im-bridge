@@ -46,7 +46,12 @@ DeepSeek Harness（DSH）是一个本地运行的 AI 助手引擎——能在你
 
 ## 🚀 怎么用
 
-**前提**：电脑上已装好 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh` 命令可用）。
+**前提**：电脑上已装好 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)。如果终端里运行 `dsh` 提示 `command not found`，先安装：
+
+```sh
+npm install -g @deepseek-ai/dsh     # 全局安装；验证：dsh --version
+# 不想全局装？每次命令前加 npx：npx @deepseek-ai/dsh <命令>
+```
 
 三个平台都是同一条路：**装插件 → 配凭据 → 重启 → 在聊天里用**。不用克隆本仓库、不用写代码。
 

@@ -1,7 +1,12 @@
 # 安装与配置指南
 
 把 dsh-im-bridge 装进 DeepSeek Harness（`dsh`），在 IM 里指挥你的 agent。
-**前提**：电脑上已装好 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh` 命令可用）。
+**前提**：电脑上已装好 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)。如果 `dsh` 提示 `command not found`，先装：
+
+```sh
+npm install -g @deepseek-ai/dsh    # 全局安装；验证 dsh --version
+# 或每次用 npx @deepseek-ai/dsh <命令>
+```
 
 > 想**不装进 DSH**、克隆仓库直接跑联调脚本？见文末「附：不装进 DSH 的方式」。
 

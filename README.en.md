@@ -47,7 +47,12 @@ In short: **your chat window is DSH's control panel**.
 
 ## 🚀 Getting started
 
-**Prerequisite**: DeepSeek Harness installed on your computer (the `dsh` command is available).
+**Prerequisite**: [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) installed on your computer. If `dsh` reports `command not found`, install it first:
+
+```sh
+npm install -g @deepseek-ai/dsh     # global install; verify with: dsh --version
+# Don't want a global install? Prefix every command with npx: npx @deepseek-ai/dsh <command>
+```
 
 All three platforms follow the same path: **install the plugin → configure credentials → restart → chat**. No need to clone this repo or write code.
 
