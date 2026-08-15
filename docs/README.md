@@ -5,7 +5,7 @@
 | 你想做什么 | 看这篇 |
 |---|---|
 | **把飞书跑通，在手机/电脑飞书里指挥 agent**（推荐路径） | [`feishu-setup.md`](feishu-setup.md) —— 从创建自建应用到在飞书里派活/审批，完整独立指南 |
-| 先不看真 IM，在终端里体验效果（不需要任何 token） | 仓库根目录 `README.md` →「先跑起来看看」，或 `node demo/mock-demo.mjs` |
+| 先不看真 IM，在终端里体验效果（不需要任何 token） | 仓库根目录 `README.md` →「怎么用」，或 `node demo/mock-demo.mjs` |
 | 装进真实 DSH profile（`dsh plugin add` + `cordis.patch.yml`） | [`install.md`](install.md) + [`example-cordis.patch.yml`](example-cordis.patch.yml) |
 | 了解产品需求与设计依据 | [`PRD-v0.5.md`](PRD-v0.5.md)（原始产品需求文档） |
 
