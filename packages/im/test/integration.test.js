@@ -251,3 +251,21 @@ test('首次信任确认：未知用户 → 管理员确认（FR-9.2）', async 
     await teardown();
   }
 });
+
+test('管理员只配 admins（allowlist 留空）也能直接通过安全门（隐式放行）', async () => {
+  const script = [];
+  const { ctx, mock, teardown } = await setup(script, {
+    security: { allowlist: [], admins: ['mock:user-1'], autoCreate: true, trustOnFirstContact: false },
+  });
+  try {
+    // 管理员自己发消息：不应收到 ⛔ 未授权
+    await mock.sendFromUser({ chatId: 'user-1', userId: 'user-1', text: 'hello' });
+    await waitFor(() => mock.sent.some((m) => m.chatId === 'user-1' && !m.text.includes('未授权')), {
+      label: 'admin passes gate',
+      timeoutMs: 8000,
+    });
+    assert.ok(!mock.sent.some((m) => m.text.includes('未授权')), 'admin 不应被安全门拦截');
+  } finally {
+    await teardown();
+  }
+});

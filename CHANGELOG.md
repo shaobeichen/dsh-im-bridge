@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### 修复
+
+- **安全门体验**：管理员（`security.admins`）隐式放行，不再要求重复写 `allowlist`——普通用户零配置，首接触由管理员一键 `/trust` 确认（FR-8.2/9.2）；全空配置时启动给出双语引导提示（`im.security.admins: ["平台:userId"]`），未授权回复附上同样的可抄配置
+
 ### 已实现（v0.1.0-rc 候选）
 
 **核心 `dsh-im`**（对应 PRD §12 MVP）

@@ -115,6 +115,8 @@ node demo/telegram-real.mjs --mode demo  # live Telegram (needs TELEGRAM_BOT_TOK
 
 This project executes remote instructions and touches real files, so security is a priority. The core principle: denied by default, risky operations require your approval. Security model and vulnerability reporting: [SECURITY.md](SECURITY.md).
 
+**End users don't configure anything security-related**: everyone is denied by default, and a stranger's first message triggers a trust confirmation — the admin (a user listed in `security.admins`) taps ✅ or replies `/trust` to let them in, permanently. The admin configures their own key once.
+
 ## 📄 License
 
 MIT

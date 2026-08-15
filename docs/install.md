@@ -60,27 +60,32 @@ dsh web
 
 ## 4. 自定义配置（可选，默认不需要）
 
-插件有默认配置（allowlist 空 = 全禁、审批开、通知开）。要改的话，编辑
-`$DSH_HOME/profiles/web/cordis.patch.yml` 覆盖对应行：
+**普通用户零配置**：装完直接发消息即可。未授权用户的第一条消息会触发「信任确认」——管理员
+（配置里 `security.admins` 的人）收到 🔐 提示，回复 `/trust <platform:userId>` 或点 ✅ 按钮即放行，
+永久生效（自动持久化）。**唯一需要改配置的人是管理员本人**，且只需一次性把自己的用户键写进
+`admins`（管理员隐式放行，无需重复写 `allowlist`）。
+
+管理员改配置：编辑 `$DSH_HOME/profiles/web/cordis.patch.yml` 覆盖对应行：
 
 ```yaml
 - id: im
   config:
     security:
-      allowlist: ["feishu:ou_xxx"]     # 可派活的用户（默认空 = 全禁）
-      admins: ["feishu:ou_xxx"]        # 管理员（可审批/信任人）
-      autoCreate: true                 # 新聊天自动建会话
-      trustOnFirstContact: false       # 个人自用可开 true（否则走管理员确认）
+      allowlist: []                     # 可派活的用户（默认空 = 全禁；经 /trust 确认后自动写入）
+      admins: ["feishu:ou_xxx"]         # 管理员（隐式放行；可审批/信任人）——普通人只需配这一行
+      autoCreate: true                  # 新聊天自动建会话
+      trustOnFirstContact: false        # 个人自用可开 true（首条消息自动信任，跳过确认）
     approvals:
-      timeoutSec: 300                  # 审批超时 → pending（可恢复拒绝）
-      autoApproveRisk: none            # none | low | medium
+      timeoutSec: 300                   # 审批超时 → pending（可恢复拒绝）
+      autoApproveRisk: none             # none | low | medium
     notifications:
-      quietHours: []                   # 如 ["22:00-08:00"] 静默时段
+      quietHours: []                    # 如 ["22:00-08:00"] 静默时段
 ```
 
 完整配置项见 [`example-cordis.patch.yml`](example-cordis.patch.yml)。
 
-> 多用户部署的严格基线：配置 `allowlist` / `admins`（默认空 = 全禁）、保持 `trustOnFirstContact: false`（首接触走管理员确认）。运行器形态的 demo/prod 模式见 [`modes.md`](modes.md)。
+> 多用户部署的严格基线：管理员在 `admins` 里配置自己的键、保持 `trustOnFirstContact: false`
+> （首接触走管理员一键确认，普通用户无需任何配置）。运行器形态的 demo/prod 模式见 [`modes.md`](modes.md)。
 
 ## 5. 命令速查
 

@@ -7,8 +7,8 @@
       name: 'dsh-im'
       config:
         security:
-          allowlist: []                       # 可派活用户，如 ["telegram:123456789"]
-          admins: []                          # 管理员，如 ["telegram:123456789"]
+          allowlist: []                       # 可派活用户，如 ["telegram:123456789"]（/trust 确认后自动写入）
+          admins: []                          # 管理员，如 ["telegram:123456789"]（隐式放行；普通用户零配置）
           autoCreate: false                   # 新聊天默认不自动建会话（FR-2.3）
           maxSessions: 10                     # FR-2.4
           trustOnFirstContact: false          # 个人自用可开 true（否则走管理员确认）

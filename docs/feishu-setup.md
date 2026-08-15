@@ -149,8 +149,9 @@ dsh web
 
 ### 第一次：信任确认
 
-- 默认（`trustOnFirstContact: false`）：你的第一条消息会收到"尚未被授权"提示，需要管理员（配置里 `security.admins` 的人）回复 `/trust feishu:<你的open_id>` 授权
-- 个人自用想省事：在 `$DSH_HOME/profiles/web/cordis.patch.yml` 里把 `im.security.trustOnFirstContact` 设为 `true`（首条消息自动信任）
+- **普通用户零配置**：你的第一条消息会收到"尚未被授权/已向管理员确认"提示，管理员（配置里 `security.admins` 的人）点 ✅ 按钮或回复 `/trust feishu:<你的open_id>` 即放行，永久生效。
+- **管理员只需配置一次**：在 `$DSH_HOME/profiles/web/cordis.patch.yml` 的 `im.security.admins` 里填入**你自己的**用户键（如 `["feishu:ou_78e92c..."]`）即可——管理员隐式放行，无需重复写 `allowlist`。
+- 个人自用想省事：把 `im.security.trustOnFirstContact` 设为 `true`（首条消息自动信任，跳过确认）。
 
 ### 常用操作
 

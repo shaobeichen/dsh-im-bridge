@@ -110,6 +110,14 @@ export class ImRuntime extends Service {
     for (const u of cfg.security.allowlist ?? []) this.map.allowlist.add(u);
     for (const u of cfg.security.admins ?? []) this.map.admins.add(u);
 
+    // 安全默认引导：allowlist 与 admins 全空 = deny-all，管理员需一次性配置自己的键
+    if ((cfg.security.allowlist?.length ?? 0) === 0 && (cfg.security.admins?.length ?? 0) === 0) {
+      this.log.warn(
+        'security: deny-all — no allowlist/admins configured yet. Add your own key once, e.g. im.security.admins: ["feishu:ou_xxx"], then every new user is approved by you with one tap. | '
+        + '安全：当前拒绝所有用户。请一次性在配置 im.security.admins 填入你自己的用户键（如 ["feishu:ou_xxx"]），之后新用户首条消息会触发你的一键信任确认。'
+      );
+    }
+
     // 审批
     this.approvals = new ApprovalManager({
       ctx: this.ctx,
@@ -221,7 +229,7 @@ export class ImRuntime extends Service {
     }
     if (!this.map.dedupe(platform, msg.msgId)) return; // FR-1.4 幂等去重
 
-    // FR-8.2：allowlist 之外的用户「可读不可写」→ 派活/命令一律拒绝
+    // FR-8.2：allowlist 之外的用户「可读不可写」→ 派活/命令一律拒绝（admins 隐式放行）
     if (!this.isAllowed(platform, userId)) {
       await this.trustGate(msg);
       return;
@@ -335,9 +343,15 @@ export class ImRuntime extends Service {
       return;
     }
 
-    // 无 admin 也无自动信任：拒绝并给出配置指引（FR-9.3 /status 缺口提示）
+    // 无 admin 也无自动信任：拒绝并给出配置指引（FR-9.3 /status 缺口提示），
+    // 同时控制台提示管理员自己的一次性配置（普通用户无需碰配置）
+    const pendingKey = `${platform}:${userId}`;
+    this.log.warn(
+      `untrusted inbound ${pendingKey}; no admins configured. To approve users by one tap, add yourself once: im.security.admins: ["${pendingKey}"] | `
+      + `收到未授权消息 ${pendingKey}，且未配置管理员。想一键审批用户，请一次性在配置 im.security.admins 填入你自己的键：["${pendingKey}"]`
+    );
     await this.send({ platform, chatId }, {
-      text: `⛔ 当前未授权（${platform}:${userId}）。\n请管理员在配置中授权：\n  im.security.allowlist: ["${platform}:${userId}"]\n或设置 security.admins 后，直接向管理员发消息触发信任确认。`,
+      text: `⛔ 当前未授权（${platform}:${userId}）。\n请管理员在配置中授权：\n  im.security.admins: ["${platform}:${userId}"]\n（只需管理员配置一次；之后新用户首条消息会推送一键信任确认，普通用户无需改任何配置。）`,
     });
   }
 

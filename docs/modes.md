@@ -2,7 +2,7 @@
 
 dsh-im-bridge 有两种运行形态，各有对应的"演示/严格"配置：
 
-1. **插件形态**（普通用户，装进 DSH）：没有 `--mode` 概念。严格基线 = 配置 `allowlist`/`admins`（默认空=全禁）、保持 `trustOnFirstContact: false`。
+1. **插件形态**（普通用户，装进 DSH）：没有 `--mode` 概念。严格基线 = 管理员在 `admins` 里配置自己的键（管理员隐式放行；默认空=全禁）、保持 `trustOnFirstContact: false`——普通用户零配置，首接触由管理员一键确认。
 2. **运行器形态**（开发者，克隆仓库跑 demo 脚本）：用 `--mode demo|prod` 一键切换，下面的表格针对这种形态。
 
 ## 运行器形态：一句话区别

@@ -67,3 +67,11 @@ test('allowlist 运行期追加持久化', async () => {
   const raw = JSON.parse(await readFile(join(dir, 'mappings.json'), 'utf8'));
   assert.ok(raw.allowlist.includes('telegram:u9'));
 });
+
+test('admin 隐式放行：只配 admins 不配 allowlist 也能通过 isAllowed', () => {
+  const map = new SessionMap(join(tmpdir(), 'im-test'));
+  map.addAdmin('feishu', 'owner');
+  assert.ok(map.isAllowed('feishu', 'owner'), 'admin 应被隐式放行');
+  assert.ok(map.isAdmin('feishu', 'owner'));
+  assert.ok(!map.isAllowed('feishu', 'stranger'), '非 admin 非 allowlist 仍被拒绝');
+});

@@ -114,6 +114,8 @@ node demo/telegram-real.mjs --mode demo   # 真实 Telegram（需 TELEGRAM_BOT_T
 
 这个项目会执行远程指令、操作真实文件，所以安全是重点。核心原则：默认拒绝，危险操作必须你点头。安全模型和漏洞报告方式见 [SECURITY.md](SECURITY.md)。
 
+**普通用户不用配任何安全项**：默认拒绝所有用户，陌生人的第一条消息会触发「信任确认」——管理员（配置里 `security.admins` 的人）点一下 ✅ 或回 `/trust` 即放行，永久生效。管理员只需一次性配置自己的用户键。
+
 ## 📄 License
 
 MIT

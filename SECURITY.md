@@ -30,7 +30,7 @@ dsh-im-bridge 是一个**远程执行**型项目：它把 DeepSeek Harness 的 a
 
 | 威胁面 | 现有对策 |
 |---|---|
-| 陌生人派活/轰炸 | allowlist 默认空=全禁；demo/prod 模式隔离；prod 必须显式配置 allowlist/admins |
+| 陌生人派活/轰炸 | allowlist 默认空=全禁（admin 隐式放行）；首接触走管理员一键信任确认（`/trust`，持久化）；demo/prod 模式隔离；prod 必须显式配置 |
 | 远程触发危险命令 | 审批门（工具内 resolved-path 策略 + 官方 approval seam）+ deny-by-default + 超时可恢复拒绝 |
 | 读取敏感文件 | 文件工具内 `PathPolicy`：敏感路径（.ssh/.aws/.env/密钥…）读/写要审批，deny 黑名单硬拒绝 |
 | 越权访问工作区外 | 受限模式（WORKSPACE_DIR）+ 开放模式的可配置 writeRoots |

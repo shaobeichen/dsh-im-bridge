@@ -25,7 +25,7 @@ export class SessionMap {
     this.bySession = new Map();
     /** 运行期追加的 allowlist 用户键（配置之外） */
     this.allowlist = new Set();
-    /** 运行期追加的 admin 用户键 */
+    /** 运行期追加的 admin 用户键（配置之外；admin 隐式放行） */
     this.admins = new Set();
     /** 最近处理过的消息 id（幂等去重，FR-1.4），Map 兼做 LRU */
     this.seen = new Map();
@@ -147,9 +147,10 @@ export class SessionMap {
     return true;
   }
 
-  /** allowlist（配置 + 运行期追加）。 */
+  /** 是否放行：allowlist 成员，或 admins（管理员隐式放行，FR-8.2 注）。 */
   isAllowed(platform, userId) {
-    return this.allowlist.has(`${platform}:${userId}`);
+    const key = `${platform}:${userId}`;
+    return this.allowlist.has(key) || this.admins.has(key);
   }
 
   addToAllowlist(platform, userId) {
