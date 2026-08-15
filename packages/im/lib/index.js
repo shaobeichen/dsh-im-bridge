@@ -62,6 +62,7 @@ const Config = z.object({
     }), // 0=仅显示 token，不估算金额
     quietHours: z.array(z.string()).default([]),      // 如 ["22:00-08:00"]（FR-5.4）
     streamWhileOnline: z.boolean().default(true),      // FR-3.3/5.5
+    streamEdit: z.boolean().default(true),             // 渠道支持 edit() 时原地更新流式消息（打字机体验）
     onlineWindowMin: z.number().default(10),           // FR-5.5 在线判定窗口
     flushIntervalMs: z.number().default(400),
   }),
@@ -139,6 +140,7 @@ export class ImRuntime extends Service {
       ctx: this.ctx,
       map: this.map,
       send: (chat, out) => this.send(chat, out),
+      edit: (chat, messageId, out) => this.edit(chat, messageId, out),
       log: (line) => this.log.info(line),
       lastUserTextFor: (sessionId) => this.lastUserTexts.get(sessionId) ?? '',
     });
@@ -150,6 +152,7 @@ export class ImRuntime extends Service {
       pricing: cfg.notifications.pricing ?? null,
       quietHours: cfg.notifications.quietHours ?? [],
       streamWhileOnline: cfg.notifications.streamWhileOnline,
+      streamEdit: cfg.notifications.streamEdit,
       onlineWindowMin: cfg.notifications.onlineWindowMin,
       flushIntervalMs: cfg.notifications.flushIntervalMs,
     });
@@ -203,6 +206,17 @@ export class ImRuntime extends Service {
     const channel = this.channels.get(platform);
     if (!channel) throw new Error(`im: no channel registered for "${platform}"`);
     return channel.send({ ...out, platform, chatId });
+  }
+
+  /** 流式原地更新路由：统一模型 → 渠道 edit()（渠道未实现时抛错，调用方回退发新消息）。 */
+  async edit({ platform, chatId }, messageId, out) {
+    await this._ready;
+    const channel = this.channels.get(platform);
+    if (!channel) throw new Error(`im: no channel registered for "${platform}"`);
+    if (typeof channel.edit !== 'function') {
+      throw new Error(`im: channel "${platform}" does not implement edit()`);
+    }
+    return channel.edit(String(messageId), { ...out, platform, chatId });
   }
 
   /** 出站路由（显式目标，含按钮/附件），供其他插件复用。 */
@@ -334,6 +348,7 @@ export class ImRuntime extends Service {
         if (!admin) continue;
         await this.send({ platform: admin.platform, chatId: admin.userId }, {
           text: `🔐 信任确认：用户 ${userName ?? userId}（${platform}）想与 agent 对话。\n回复 /trust ${pending} 信任，或 /revoke ${pending} 拒绝。`,
+          title: '🔐 信任确认',
           buttons: [{ id: `trust:${platform}:${userId}`, label: '✅ 信任', style: 'primary' }],
         }).catch(() => {});
       }

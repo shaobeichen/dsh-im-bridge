@@ -201,6 +201,7 @@ export class ApprovalManager {
     lines.push(`会话: ${record.binding.sessionId}`);
     return {
       text: lines.join('\n'),
+      title: '🔐 审批请求',
       buttons: [
         { id: `approve:${record.id}:yes`, label: '✅ 批准', style: 'primary' },
         { id: `approve:${record.id}:no`, label: '❌ 拒绝', style: 'danger' },

@@ -17,6 +17,10 @@
   - `card.action.trigger`（卡片回传交互，**在开放平台「回调配置」页签添加**）→ `ctx.im.handleCallback`
 - 出站：
   - 文本消息 `im.message.create`（`receive_id_type` 按入站学习 + id 前缀启发：`ou_`=open_id / `oc_`=chat_id）
-  - 审批卡片：`msg_type: interactive`，按钮 value 携带 `{action, id, answer}` 回传
+  - 审批卡片：`msg_type: interactive`，按钮 value 携带 `{action, id, answer}` 回传；卡片标题用 `out.title`
+  - 流式卡片（打字机体验）：`notifications.streamEdit: true`（默认）时，流式增量首帧发送
+    interactive 卡片，后续帧经 `im.message.patch` 原地更新同一张卡片（飞书只支持 patch 卡片，
+    文本消息不可编辑）；`edit()` 失败时核心自动回退逐条新消息
   - 文件（`/log` 全量交付）：`im.file.create` 上传 → `msg_type: file`
+  - 出站业务失败（`code != 0`）一律抛出并带平台错误码（`err.code`/`err.msg`），绝不静默吞掉
 - 断线重连/心跳：由官方 `WSClient`（`autoReconnect: true`）内置（FR-1.5）

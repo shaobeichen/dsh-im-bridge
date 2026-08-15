@@ -24,6 +24,10 @@ import { createFeishuProvisionSession } from './provision.js';
 const name = 'im-feishu';
 const inject = ['im', 'connection'];
 
+/** 流式卡片正文上限（lark_md 字段限制内取保守值）。 */
+const STREAM_TAIL_CHARS = 2800;
+const STREAM_TITLE = 'DeepSeek Harness ⏳ 执行中';
+
 const Config = z.object({
   appId: z.string().default('env:FEISHU_APP_ID'),
   appSecret: z.string().default('env:FEISHU_APP_SECRET'),
@@ -86,6 +90,7 @@ export function apply(ctx, config = {}, internals = {}) {
       lastEventAt: null, // 收到任何事件的时间戳（可观测性：连接活着 ≠ 事件在流）
     },
     send,
+    edit,
     sendFile,
     dispose: async () => {
       disposed = true;
@@ -210,22 +215,65 @@ export function apply(ctx, config = {}, internals = {}) {
     const receiveId = out.chatId;
     const receiveIdType = kindFor(receiveId);
     if (out.buttons?.length) {
-      await sendCard(receiveId, receiveIdType, out);
-      return {};
+      const r = await sendCard(receiveId, receiveIdType, out);
+      return { messageId: r?.data?.message_id };
+    }
+    if (out.stream) {
+      const r = await sendStreamCard(receiveId, receiveIdType, out);
+      return { messageId: r?.data?.message_id };
     }
     if (out.text) {
-      try {
-        const r = await client.im.message.create({
-          params: { receive_id_type: receiveIdType },
-          data: { receive_id: receiveId, msg_type: 'text', content: JSON.stringify({ text: out.text }) },
-        });
-        if (debug) logger.info('dsh-im-feishu: text sent to %s (%s) ok=%s', receiveId, receiveIdType, r?.code === 0);
-      } catch (err) {
-        logger.error('dsh-im-feishu: send to %s failed | 发送失败: %s (code=%s msg=%s)', receiveId, err?.message ?? err, err?.code, err?.msg);
-        throw err;
-      }
+      const r = await client.im.message.create({
+        params: { receive_id_type: receiveIdType },
+        data: { receive_id: receiveId, msg_type: 'text', content: JSON.stringify({ text: out.text }) },
+      });
+      ensureOk(r, `text to ${receiveId}`);
+      if (debug) logger.info('dsh-im-feishu: text sent to %s (%s) ok=%s', receiveId, receiveIdType, r?.code === 0);
+      return { messageId: r?.data?.message_id };
     }
     return {};
+  }
+
+  /** 流式原地更新（打字机体验）：核心发首帧后持 messageId 连续调用本方法。 */
+  async function edit(messageId, out) {
+    const r = await client.im.message.patch({
+      path: { message_id: String(messageId) },
+      data: { content: JSON.stringify(buildStreamCard(out)) },
+    });
+    ensureOk(r, `patch ${messageId}`);
+    return {};
+  }
+
+  /** 业务失败（code != 0）必须抛出并带平台错误码——绝不静默吞掉（AGENTS.md 可观测三件套）。 */
+  function ensureOk(r, what) {
+    if (!r || r.code !== 0) {
+      const err = new Error(`feishu ${what} failed: code=${r?.code ?? 'n/a'} msg=${r?.msg ?? String(r)}`);
+      err.code = r?.code;
+      err.msg = r?.msg;
+      throw err;
+    }
+  }
+
+  /** 流式卡片：lark_md 正文 + 实时提示脚注。核心已做尾部截断，这里再兜底一次。 */
+  function buildStreamCard(out) {
+    const text = String(out.text ?? '').slice(-STREAM_TAIL_CHARS);
+    return {
+      config: { wide_screen_mode: true },
+      header: { title: { tag: 'plain_text', content: out.title ?? STREAM_TITLE }, template: 'blue' },
+      elements: [
+        { tag: 'div', text: { tag: 'lark_md', content: text || '…' } },
+        { tag: 'note', elements: [{ tag: 'plain_text', content: '🔄 实时输出中 · 完整结果：回复 /log' }] },
+      ],
+    };
+  }
+
+  async function sendStreamCard(receiveId, receiveIdType, out) {
+    const r = await client.im.message.create({
+      params: { receive_id_type: receiveIdType },
+      data: { receive_id: receiveId, msg_type: 'interactive', content: JSON.stringify(buildStreamCard(out)) },
+    });
+    ensureOk(r, `stream card to ${receiveId}`);
+    return r;
   }
 
   async function sendCard(receiveId, receiveIdType, out) {
@@ -237,16 +285,18 @@ export function apply(ctx, config = {}, internals = {}) {
     }));
     const card = {
       config: { wide_screen_mode: true },
-      header: { title: { tag: 'plain_text', content: '🔐 审批请求' }, template: 'blue' },
+      header: { title: { tag: 'plain_text', content: out.title ?? '🔐 审批请求' }, template: 'blue' },
       elements: [
         { tag: 'div', text: { tag: 'lark_md', content: out.text } },
         { tag: 'action', actions },
       ],
     };
-    await client.im.message.create({
+    const r = await client.im.message.create({
       params: { receive_id_type: receiveIdType },
       data: { receive_id: receiveId, msg_type: 'interactive', content: JSON.stringify(card) },
     });
+    ensureOk(r, `card to ${receiveId}`);
+    return r;
   }
 
   /** 按钮 id（approve:<id>:yes）→ 卡片 value（回调原样回传）。 */

@@ -7,9 +7,10 @@ import assert from 'node:assert/strict';
 
 import { apply, parseMessageContent } from '../lib/index.js';
 
-/** Stub 官方 SDK：记录调用，可触发事件 handler。 */
-function fakeSdk() {
+/** Stub 官方 SDK：记录调用，可触发事件 handler；failCreateWith/failPatchWith 注入业务失败。 */
+function fakeSdk({ failCreateWith = null, failPatchWith = null } = {}) {
   const sentMessages = [];
+  const patchedMessages = [];
   const fileUploads = [];
   let messageHandler = null;
   let cardHandler = null;
@@ -28,7 +29,16 @@ function fakeSdk() {
     get im() {
       return {
         message: {
-          create: async (payload) => { sentMessages.push(payload); return { code: 0 }; },
+          create: async (payload) => {
+            sentMessages.push(payload);
+            if (failCreateWith) return { code: failCreateWith.code ?? 99991663, msg: failCreateWith.msg ?? 'no permission' };
+            return { code: 0, data: { message_id: `om_${sentMessages.length}` } };
+          },
+          patch: async (payload) => {
+            patchedMessages.push(payload);
+            if (failPatchWith) return { code: failPatchWith.code ?? 99991663, msg: failPatchWith.msg ?? 'no permission' };
+            return { code: 0 };
+          },
         },
         file: {
           create: async (payload) => { fileUploads.push(payload); return { file_key: 'file_key_1' }; },
@@ -53,6 +63,7 @@ function fakeSdk() {
   return {
     fakeSdk: { Client: FakeClient, EventDispatcher: FakeEventDispatcher, WSClient: FakeWSClient, LoggerLevel: { warn: 'warn' } },
     get sentMessages() { return sentMessages; },
+    get patchedMessages() { return patchedMessages; },
     get fileUploads() { return fileUploads; },
     get wsInstance() { return wsInstance; },
     emitMessage(data) { messageHandler(data); },
@@ -122,6 +133,7 @@ test('事件 im.message.receive_v1 → ImMessage；出站文本/卡片/文件', 
   const cardReq = sdk.sentMessages[0];
   assert.equal(cardReq.data.msg_type, 'interactive');
   const card = JSON.parse(cardReq.data.content);
+  assert.equal(card.header.title.content, '🔐 审批请求', '未指定 title 时用默认审批标题');
   assert.equal(card.elements[1].tag, 'action');
   assert.equal(card.elements[1].actions[0].value.id, 'abc');
   assert.equal(card.elements[1].actions[0].value.answer, 'yes');
@@ -152,6 +164,62 @@ test('卡片按钮回调 card.action.trigger → handleCallback（含身份校�
   assert.equal(cb.userId, 'ou_9');
   assert.equal(cb.chatId, 'oc_9');
   assert.equal(cb.userName, 'Bob');
+  dispose();
+});
+
+test('流式卡片：send(stream) 发 interactive 卡片并返回 messageId；edit 走 message.patch', async () => {
+  const sdk = fakeSdk();
+  const im = fakeIm();
+  const dispose = apply(ctx(im), { appId: 'app1', appSecret: 'sec1' }, { sdk: sdk.fakeSdk });
+  const channel = im.channels.get('feishu');
+
+  const res = await channel.send({ chatId: 'oc_1', text: '第一帧输出', stream: true, title: 'DeepSeek Harness ⏳ 执行中' });
+  assert.equal(res.messageId, 'om_1', 'send 返回 messageId（供 edit 使用）');
+  const cardMsg = sdk.sentMessages.at(-1);
+  assert.equal(cardMsg.data.msg_type, 'interactive', '流式帧渲染为交互卡片');
+  const card = JSON.parse(cardMsg.data.content);
+  assert.equal(card.header.title.content, 'DeepSeek Harness ⏳ 执行中');
+  assert.ok(card.elements[0].text.content.includes('第一帧输出'));
+  assert.equal(card.elements[1].tag, 'note', '带实时输出脚注');
+
+  await channel.edit('om_1', { text: '第二帧（含增量）', stream: true, title: 'DeepSeek Harness ⏳ 执行中' });
+  assert.equal(sdk.patchedMessages.length, 1, 'edit 调用 message.patch');
+  assert.equal(sdk.patchedMessages[0].path.message_id, 'om_1');
+  const patched = JSON.parse(sdk.patchedMessages[0].data.content);
+  assert.ok(patched.elements[0].text.content.includes('第二帧'));
+  assert.equal(sdk.sentMessages.length, 1, 'edit 不产生新消息');
+  dispose();
+});
+
+test('超长流式帧：适配器兜底截断到卡片字段限制内', async () => {
+  const sdk = fakeSdk();
+  const im = fakeIm();
+  const dispose = apply(ctx(im), { appId: 'app1', appSecret: 'sec1' }, { sdk: sdk.fakeSdk });
+  const channel = im.channels.get('feishu');
+  await channel.send({ chatId: 'oc_1', text: 'x'.repeat(6000), stream: true });
+  const card = JSON.parse(sdk.sentMessages.at(-1).data.content);
+  assert.ok(card.elements[0].text.content.length <= 2800, '卡片正文截断到限制内');
+  dispose();
+});
+
+test('业务失败（code != 0）：send/edit 抛错并带平台错误码（不静默吞掉）', async () => {
+  const sdk = fakeSdk({
+    failCreateWith: { code: 99991663, msg: 'no permission' },
+    failPatchWith: { code: 99991664, msg: 'card expired' },
+  });
+  const im = fakeIm();
+  const dispose = apply(ctx(im), { appId: 'app1', appSecret: 'sec1' }, { sdk: sdk.fakeSdk });
+  const channel = im.channels.get('feishu');
+  await assert.rejects(
+    () => channel.send({ chatId: 'oc_1', text: 'hi' }),
+    (err) => err.code === 99991663 && /no permission/.test(err.msg),
+    '文本发送的业务失败必须抛出'
+  );
+  await assert.rejects(
+    () => channel.edit('om_1', { text: 'x', stream: true }),
+    (err) => err.code === 99991664 && /card expired/.test(err.msg),
+    'edit 的业务失败必须抛出（核心据此回退发新消息）'
+  );
   dispose();
 });
 
