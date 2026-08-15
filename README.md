@@ -46,18 +46,20 @@ DeepSeek Harness（DSH）是一个本地运行的 AI 助手引擎——能在你
 
 ## 🚀 怎么用
 
-三个平台都是同样的节奏：**准备 → 启动 → 在聊天里开始用**。电脑需要 Node.js 22+，仓库目录先跑一次 `npm install`。
+**前提**：电脑上已装好 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh` 命令可用）。
 
-| 平台 | 准备（拿什么） | 启动 | 开始用 |
+三个平台都是同一条路：**装插件 → 配凭据 → 重启 → 在聊天里用**。不用克隆本仓库、不用写代码。
+
+| 平台 | 一条命令安装 | 准备（拿什么） | 开始用 |
 |---|---|---|---|
-| 飞书 | 在[开放平台](https://open.feishu.cn/app)建企业自建应用，拿 App ID / App Secret（[图文指引](docs/feishu-setup.md)） | 设好 `FEISHU_APP_ID`、`FEISHU_APP_SECRET`、`DEEPSEEK_API_KEY`，然后运行<br>`node demo/feishu-real.mjs --mode demo` | 私聊机器人：`/new` 建会话 → 直接派活；危险操作弹审批卡片，点按钮放行 |
-| 企业微信 | 在[管理后台](https://work.weixin.qq.com/wework_admin/frame)建自建应用，拿 CorpID / AgentId / Secret，并配置回调地址和可信 IP（[指引](docs/wecom-setup.md)） | 设好 `WECOM_CORP_ID`、`WECOM_AGENT_ID`、`WECOM_SECRET`、`WECOM_CALLBACK_TOKEN`、`WECOM_ENCODING_AES_KEY`，然后运行<br>`node demo/wecom-real.mjs --mode demo` | 手机"工作台"打开应用：`/new` → 派活；危险操作收到审批文本，回复 `/approve <id> yes`（企微无按钮） |
-| Telegram | 用 [@BotFather](https://t.me/BotFather) 建 bot，拿 token（[图文指引](docs/telegram-setup.md)） | 设好 `TELEGRAM_BOT_TOKEN`，然后运行<br>`node demo/telegram-real.mjs --mode demo` | 私聊 bot：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |
+| 飞书 | `dsh plugin --profile web add dsh-im dsh-im-feishu` | 在[开放平台](https://open.feishu.cn/app)建企业自建应用，拿 App ID / App Secret（[图文指引](docs/feishu-setup.md)） | 配好凭据重启 `dsh web`，在飞书私聊机器人：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |
+| 企业微信 | `dsh plugin --profile web add dsh-im dsh-im-wecom` | 在[管理后台](https://work.weixin.qq.com/wework_admin/frame)建自建应用，拿 CorpID / AgentId / Secret，并配置回调地址和可信 IP（[指引](docs/wecom-setup.md)） | 配好凭据重启 `dsh web`，手机"工作台"打开应用：`/new` → 派活；审批回复 `/approve <id> yes`（企微无按钮） |
+| Telegram | `dsh plugin --profile web add dsh-im dsh-im-telegram` | 用 [@BotFather](https://t.me/BotFather) 建 bot，拿 token（[图文指引](docs/telegram-setup.md)） | 配好凭据重启 `dsh web`，私聊 bot：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |
 
-详细的逐屏配置步骤，见各平台的 setup 文档（上面"准备"列已链接）。
+> 凭据通过环境变量配置（`FEISHU_APP_ID`、`WECOM_CORP_ID`、`TELEGRAM_BOT_TOKEN` 等），具体见各平台 setup 文档。
 
-> [!TIP]
-> 想先不接任何 IM，在终端里体验？运行 `node demo/mock-demo.mjs` 即可。
+> [!NOTE]
+> 想**不装进 DSH**、克隆仓库直接跑联调脚本（需要 Node.js 22+）？见下方「开发者相关」里的 demo 运行器说明。
 
 ## 🗂 包结构
 
@@ -93,6 +95,15 @@ DeepSeek Harness（真正干活）
 - 想改代码、加新渠道，先看 [CONTRIBUTING.md](CONTRIBUTING.md)
 - 给 AI 代理看的仓库规则：[AGENTS.md](AGENTS.md)
 - 原始产品需求文档：[docs/PRD-v0.5.md](docs/PRD-v0.5.md)
+
+**不想装进 DSH、直接跑联调脚本？**（需要克隆本仓库 + Node.js 22+）
+
+```sh
+node demo/mock-demo.mjs            # 终端模拟 IM，不接任何平台
+node demo/feishu-real.mjs --mode demo     # 真实飞书（需 FEISHU_APP_ID/SECRET）
+node demo/wecom-real.mjs --mode demo      # 真实企微（需 WECOM_* 凭据）
+node demo/telegram-real.mjs --mode demo   # 真实 Telegram（需 TELEGRAM_BOT_TOKEN）
+```
 
 ## 🔒 安全说明
 

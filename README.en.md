@@ -47,20 +47,20 @@ In short: **your chat window is DSH's control panel**.
 
 ## 🚀 Getting started
 
-All three platforms follow the same rhythm: **prepare → start → chat**. You need Node.js 22+; run `npm install` in the repo directory first.
+**Prerequisite**: DeepSeek Harness installed on your computer (the `dsh` command is available).
 
-> Want to try it in the terminal without any IM? Run `node demo/mock-demo.mjs`.
+All three platforms follow the same path: **install the plugin → configure credentials → restart → chat**. No need to clone this repo or write code.
 
-| Platform | Prepare | Start | Use |
+| Platform | One-command install | Prepare | Use |
 |---|---|---|---|
-| Feishu | Create an enterprise self-built app on the [Open Platform](https://open.feishu.cn/app), get App ID / App Secret ([guide](docs/feishu-setup.md)) | Set `FEISHU_APP_ID`, `FEISHU_APP_SECRET`, `DEEPSEEK_API_KEY`, then run<br>`node demo/feishu-real.mjs --mode demo` | Private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
-| WeCom | Create a self-built app in the [admin console](https://work.weixin.qq.com/wework_admin/frame), get CorpID / AgentId / Secret, configure callback URL and Trusted IP ([guide](docs/wecom-setup.md)) | Set `WECOM_CORP_ID`, `WECOM_AGENT_ID`, `WECOM_SECRET`, `WECOM_CALLBACK_TOKEN`, `WECOM_ENCODING_AES_KEY`, then run<br>`node demo/wecom-real.mjs --mode demo` | Open the app from "Workbench": `/new` → send tasks; approval comes as text — reply `/approve <id> yes` (no buttons) |
-| Telegram | Create a bot with [@BotFather](https://t.me/BotFather), get the token ([guide](docs/telegram-setup.md)) | Set `TELEGRAM_BOT_TOKEN`, then run<br>`node demo/telegram-real.mjs --mode demo` | Private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
+| Feishu | `dsh plugin --profile web add dsh-im dsh-im-feishu` | Create an enterprise self-built app on the [Open Platform](https://open.feishu.cn/app), get App ID / App Secret ([guide](docs/feishu-setup.md)) | Configure credentials, restart `dsh web`, private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
+| WeCom | `dsh plugin --profile web add dsh-im dsh-im-wecom` | Create a self-built app in the [admin console](https://work.weixin.qq.com/wework_admin/frame), get CorpID / AgentId / Secret, configure callback URL and Trusted IP ([guide](docs/wecom-setup.md)) | Configure credentials, restart `dsh web`, open the app from "Workbench": `/new` → send tasks; approval comes as text — reply `/approve <id> yes` (no buttons) |
+| Telegram | `dsh plugin --profile web add dsh-im dsh-im-telegram` | Create a bot with [@BotFather](https://t.me/BotFather), get the token ([guide](docs/telegram-setup.md)) | Configure credentials, restart `dsh web`, private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
 
-Step-by-step console screenshots live in each platform's setup doc (linked in the "Prepare" column).
+> Credentials go in environment variables (`FEISHU_APP_ID`, `WECOM_CORP_ID`, `TELEGRAM_BOT_TOKEN`, etc.). See each platform's setup doc for details.
 
-> [!TIP]
-> Want to try it in the terminal without any IM? Run `node demo/mock-demo.mjs`.
+> [!NOTE]
+> Want to run the integration scripts **without installing into DSH** (requires cloning the repo + Node.js 22+)? See the demo runners under "For developers" below.
 
 ## 🗂 Package layout
 
@@ -96,6 +96,15 @@ For more, see the [docs index](docs/README.md).
 - Want to modify code or add a channel? Start with [CONTRIBUTING.md](CONTRIBUTING.md)
 - Repo rules for AI agents: [AGENTS.md](AGENTS.md)
 - Original product spec: [docs/PRD-v0.5.md](docs/PRD-v0.5.md)
+
+**Run the integration scripts without installing into DSH?** (clone this repo + Node.js 22+)
+
+```sh
+node demo/mock-demo.mjs                  # terminal-only mock IM
+node demo/feishu-real.mjs --mode demo    # live Feishu (needs FEISHU_APP_ID/SECRET)
+node demo/wecom-real.mjs --mode demo     # live WeCom (needs WECOM_* credentials)
+node demo/telegram-real.mjs --mode demo  # live Telegram (needs TELEGRAM_BOT_TOKEN)
+```
 
 ## 🔒 Security
 
