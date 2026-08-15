@@ -35,24 +35,57 @@ It helps you:
 - **Session management**: `/new` to start, `/status` to check, `/mute` to silence notifications, and more
 - **Access control**: configure who can use it and who is an admin (only admins can approve and change settings)
 
-## Getting started (with Feishu)
+## Getting started
 
-Three steps:
-
-1. **Create an app on the Feishu Open Platform** and get the App ID and App Secret. Illustrated guide: [docs/feishu-setup.md](docs/feishu-setup.md)
-2. **Start the bridge on your computer**. You need Node.js 22 or newer; run `npm install` in the repo directory, then run the start command and wait for "connected"
-3. **Message the bot in Feishu**. Search for your app and start a private chat
-
-Then you can:
-
-- Send `/new` to create a session
-- Send a task directly, e.g. "list the files in the current directory"
-- For risky operations, the bot sends an approval card — tap a button to allow or deny
-- Send `/status` to check state, `/log` to export the full output
-
-WeCom works similarly ([docs/wecom-setup.md](docs/wecom-setup.md)). Telegram: [packages/im-telegram](packages/im-telegram).
+Pick your platform and follow that section. All three follow the same rhythm: **prepare → start → chat**.
 
 > Want to try it in the terminal without any IM? Run `node demo/mock-demo.mjs`.
+
+### Feishu
+
+**Prepare**: create an enterprise self-built app on the [Feishu Open Platform](https://open.feishu.cn/app) and get the App ID and App Secret. Illustrated guide: [docs/feishu-setup.md](docs/feishu-setup.md)
+
+**Start** (Node.js 22+; run `npm install` in the repo directory first):
+
+```sh
+FEISHU_APP_ID=your-app-id FEISHU_APP_SECRET=your-secret DEEPSEEK_API_KEY=sk-your-key \
+  node demo/feishu-real.mjs --mode demo
+```
+
+Once "connected", search for your bot in Feishu and start a private chat:
+
+- Send `/new` to create a session, then send tasks like "list the files in the current directory"
+- Risky operations send an approval card — tap a button to allow or deny
+- `/status` to check state, `/log` to export the full output
+
+### WeCom (WeChat Work)
+
+**Prepare**: create a self-built app in the [WeCom admin console](https://work.weixin.qq.com/wework_admin/frame), get CorpID / AgentId / Secret, configure the "Receive messages" callback URL and "Trusted IP". Full guide: [docs/wecom-setup.md](docs/wecom-setup.md)
+
+**Start**:
+
+```sh
+WECOM_CORP_ID=your-corpid WECOM_AGENT_ID=1000002 WECOM_SECRET=your-secret \
+WECOM_CALLBACK_TOKEN=your-token WECOM_ENCODING_AES_KEY=your-43-char-key \
+DEEPSEEK_API_KEY=sk-your-key node demo/wecom-real.mjs --mode demo
+```
+
+Open your app from "Workbench" in the WeCom mobile app:
+
+- Send `/new` to create a session, then send tasks directly
+- Risky operations come as a text notice — reply `/approve <id> yes` to allow (WeCom has no buttons)
+
+### Telegram
+
+**Prepare**: create a bot with [@BotFather](https://t.me/BotFather) and get the bot token.
+
+**Start**:
+
+```sh
+TELEGRAM_BOT_TOKEN=your-token node demo/telegram-real.mjs --mode demo
+```
+
+Private-chat your bot in Telegram. Usage is the same as Feishu (approval via buttons).
 
 ## Package layout
 
