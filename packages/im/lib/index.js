@@ -550,6 +550,13 @@ export class ImRuntime extends Service {
       descEn: 'approve/reject by text',
       run: (c, args) => c.core.commandApprove(c.msg, args),
     });
+    registerCommand('stop', {
+      perm: 'user',
+      usage: '',
+      desc: '停止当前正在运行的任务',
+      descEn: 'stop the running task',
+      run: (c) => c.core.commandStop(c.msg),
+    });
     registerCommand('trust', {
       perm: 'admin',
       usage: '<platform:userId>',
@@ -699,6 +706,24 @@ export class ImRuntime extends Service {
       forbidden: `⛔ 无权限：审批需要 allowlist 成员身份。`,
     };
     await this.send({ platform: msg.platform, chatId: msg.chatId }, { text: texts[result] ?? `ℹ️ ${result}` });
+  }
+
+  async commandStop(msg) {
+    const { platform, chatId } = msg;
+    const binding = this.map.get(platform, chatId);
+    if (!binding) {
+      return this.send({ platform, chatId }, { text: 'ℹ️ 尚未创建会话。' });
+    }
+    const agent = this.ctx.agents.get(binding.sessionId);
+    if (!agent) {
+      return this.send({ platform, chatId }, { text: 'ℹ️ 会话不在线（重启后需先发一条消息恢复）。' });
+    }
+    if (agent.status === 'idle') {
+      return this.send({ platform, chatId }, { text: 'ℹ️ 当前没有运行中的任务。' });
+    }
+    agent.cancel({ kind: 'user' });
+    this.log.info(`/stop: cancelled ${binding.sessionId} | 已请求停止 ${binding.sessionId}`);
+    await this.send({ platform, chatId }, { text: '⏹️ 已请求停止当前任务。' });
   }
 
   async commandTrust(msg, args) {
