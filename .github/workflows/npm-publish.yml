@@ -1,0 +1,47 @@
+name: npm publish
+
+# 打 tag（v*）即触发：跑测试 → 发布 4 个包到 npm。
+# 发布顺序：先 dsh-im 核心，再三个渠道（渠道 peerDepend 核心）。
+#
+# 首次配置（一次性）：
+#   1. npmjs.com → Access Tokens → Generate New Token → 类型选 Automation（或 Publish）
+#   2. 仓库 Settings → Secrets and variables → Actions → New repository secret
+#      名字 NPM_TOKEN，值粘贴刚生成的 token
+#
+# 发布流程：
+#   npm version 0.1.0 --workspaces    # 统一升版 + 打 tag v0.1.0
+#   git push origin main --tags       # 触发本 workflow，自动测试并发布
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+      - run: npm ci
+      - name: 测试
+        run: npm test
+      - name: 发布 dsh-im（核心）
+        run: npm publish --workspace dsh-im
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: 发布 dsh-im-telegram
+        run: npm publish --workspace dsh-im-telegram
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: 发布 dsh-im-feishu
+        run: npm publish --workspace dsh-im-feishu
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: 发布 dsh-im-wecom
+        run: npm publish --workspace dsh-im-wecom
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

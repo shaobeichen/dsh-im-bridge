@@ -22,29 +22,33 @@ dsh-plugin  deepseek-harness  im-bridge  feishu  lark  wecom  telegram  ai-agent
 
 保存。`dsh-plugin` 是必须的（awesome 列表硬性要求），其余是曝光。
 
-## ② 发布 npm（先核心后适配器）
+## ② 发布 npm（已配置 GitHub Actions 自动发布）
 
-前置：注册 npm 账号，终端执行一次 `npm login`。
+仓库已带 `.github/workflows/npm-publish.yml`：**打 `v*` tag 即自动测试 + 发布 4 个包**（先核心后渠道）。
+
+**一次性配置（10 分钟）**：
+
+1. 注册 npm 账号：https://www.npmjs.com/signup
+2. 生成发布 token：npmjs.com → 头像 → **Access Tokens** → Generate New Token → 类型选 **Automation**（或 Publish）→ 复制
+3. 把 token 存进仓库 Secret：GitHub 仓库 → **Settings → Secrets and variables → Actions → New repository secret** → 名字填 **`NPM_TOKEN`**，值粘贴 token
+
+**以后每次发布（两条命令）**：
 
 ```sh
-# 顺序很重要：先 dsh-im（适配器 peerDepend 它），再渠道
-npm publish --workspace dsh-im
-npm publish --workspace dsh-im-telegram
-npm publish --workspace dsh-im-feishu
-npm publish --workspace dsh-im-wecom
+npm version 0.1.0 --workspaces   # 4 个包统一升版 + 打 tag v0.1.0
+git push origin main --tags      # 触发 workflow：测试 → 发布 → 完成
 ```
 
-已检查：4 个包名在 npm 全部可用 ✅；元数据（license/repository/keywords/dsh.bundle）已补齐 ✅。
-版本号都是 `0.1.0-rc.1`，建议保持同步发布（PRD §11：单版本同步发布）。
+到 Actions 页看发布结果；发布后在 npm 搜索 `dsh-im` 确认。
 
-发布后安装命令就变成：
+安装命令（发布后生效）：
 
 ```sh
 dsh plugin --profile web add dsh-im dsh-im-feishu   # 或 dsh-im-wecom / dsh-im-telegram
 ```
 
-> 小坑：发 rc 版本 `npm publish` 默认带 `--tag next`，正式 `dsh plugin add` 默认装 latest。
-> 想让它出现在默认安装里，发 `0.1.0` 正式版，或 `npm dist-tag add dsh-im@0.1.0-rc.1 latest`。
+> 版本约定：当前都是 `0.1.0-rc.1`。首次正式发布建议直接 `npm version 0.1.0 --workspaces`（正式版默认 latest，`dsh plugin add` 直接能装；rc 版默认走 next tag）。
+> 已检查：4 个包名 npm 全部可用 ✅；发布元数据（license/repository/keywords/dsh.bundle/publishConfig）✅；tarball 含 `cordis.patch.yml` ✅。
 
 ## ③ awesome-dsh-plugin PR（分类：Notifications & Integrations / 通知与集成）
 
