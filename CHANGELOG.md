@@ -6,6 +6,9 @@
 
 ### 新增
 
+- **网页扫码接入（设置 → 插件 → 飞书 / 微信 页签）**：二维码直接在 DeepSeek Harness 网页里显示，
+  手机扫码确认（微信含配对数字输入框）→ 凭据写入 Host 本机 → 重启生效。全程不碰终端；
+  loopback RPC（`ctx.connection.rpc`）+ 官方 SDK 流程，App Secret / bot_token 不进浏览器
 - **微信渠道 `dsh-im-weixin`**：腾讯 iLink 个人微信机器人（官方协议，源自腾讯开源 MIT 项目 openclaw-weixin），
   `getupdates` 长轮询免公网；`npx -y dsh-im-weixin-qr` 扫码绑定（含配对数字流程），
   凭据自动写入 `$DSH_HOME/dsh-im/weixin-credentials.json`；无原生按钮，审批降级文本（18/18 测试）

@@ -26,9 +26,13 @@
 
 ```sh
 dsh plugin --profile web add dsh-im dsh-im-weixin -w   # 装插件
-npx -y dsh-im-weixin-qr                                 # 扫码绑定（一次性）
-npx @deepseek-ai/dsh web                                # 重启，在微信里发消息
 ```
+
+绑定（二选一）：
+- **网页（推荐）**：`dsh web` → 设置 → 插件 → 微信 → 「扫码绑定」→ 手机微信扫码（配对数字在网页输入）
+- **终端**：`npx -y dsh-im-weixin-qr`
+
+重启 `npx @deepseek-ai/dsh web`，在微信里发消息即可。
 
 详见仓库 [`docs/weixin-setup.md`](../../docs/weixin-setup.md)。
 

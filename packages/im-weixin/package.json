@@ -11,16 +11,25 @@
     ".": {
       "default": "./lib/index.js"
     },
+    "./client": "./client/client.js",
     "./package.json": "./package.json"
   },
   "files": [
     "lib",
     "bin",
+    "client",
     "cordis.patch.yml"
   ],
+  "scripts": {
+    "build:client": "node client/build.mjs"
+  },
   "license": "MIT",
   "dependencies": {
+    "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
@@ -50,6 +59,13 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-slots"
+      ],
+      "platform": "web"
     }
   },
   "publishConfig": {

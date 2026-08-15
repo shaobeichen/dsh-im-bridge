@@ -18,8 +18,11 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
 
+import { installFeishuWebRpc } from './web-rpc.js';
+import { createFeishuProvisionSession } from './provision.js';
+
 const name = 'im-feishu';
-const inject = ['im'];
+const inject = ['im', 'connection'];
 
 const Config = z.object({
   appId: z.string().default('env:FEISHU_APP_ID'),
@@ -94,10 +97,24 @@ export function apply(ctx, config = {}, internals = {}) {
   };
   ctx.get('im').registerChannel(channel);
 
+  // Web 设置页签（扫码接入）：浏览器 ⇄ Host loopback RPC；无凭据也能扫码建应用。
+  // 凭据只写 Host 本机文件，App Secret 不进浏览器。
+  const provisionSession = internals.provisionSession ?? createFeishuProvisionSession({ lark: sdk });
+  const disposeRpc = installFeishuWebRpc(ctx, {
+    session: provisionSession,
+    getStatus: () => channel.status,
+    log: logger,
+  });
+  const disposeAll = () => {
+    disposeRpc();
+    provisionSession.cancel();
+    return channel.dispose();
+  };
+
   if (!appId || !appSecret) {
     // FR-9.3：缺凭据 = 优雅断开，不崩启动；/status 会显示缺口
-    logger.error('dsh-im-feishu: missing appId/appSecret — set FEISHU_APP_ID / FEISHU_APP_SECRET; channel stays disconnected | 缺少 appId/appSecret，请设置 FEISHU_APP_ID / FEISHU_APP_SECRET，通道保持断开');
-    return () => channel.dispose();
+    logger.error('dsh-im-feishu: missing appId/appSecret — scan to connect in Settings → 飞书, or set FEISHU_APP_ID / FEISHU_APP_SECRET; channel stays disconnected | 缺少 appId/appSecret：可在网页设置「飞书」页扫码接入，或设置 FEISHU_APP_ID / FEISHU_APP_SECRET，通道保持断开');
+    return disposeAll;
   }
 
   client = new sdk.Client({ appId, appSecret, loggerLevel: sdk.LoggerLevel?.[logLevel] });
@@ -130,7 +147,7 @@ export function apply(ctx, config = {}, internals = {}) {
     logger.error('dsh-im-feishu: start failed | 启动失败: %s', err?.message ?? err);
   });
 
-  return () => channel.dispose();
+  return disposeAll;
 
   // ── 入站 ─────────────────────────────────────────────────────────────────
 

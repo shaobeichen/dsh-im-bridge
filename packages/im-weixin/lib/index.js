@@ -18,9 +18,11 @@ import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
 
 import { createWeixinApi, extractWeixinText, weixinMessageId, splitWeixinText, normalizeWeixinApiBaseUrl } from './weixin-api.js';
+import { installWeixinWebRpc } from './web-rpc.js';
+import { createWeixinBindSession } from './provision.js';
 
 const name = 'im-weixin';
-const inject = ['im'];
+const inject = ['im', 'connection'];
 
 const Config = z.object({
   botToken: z.string().default('env:WECHAT_BOT_TOKEN'),
@@ -101,9 +103,22 @@ export function apply(ctx, config = {}, internals = {}) {
   };
   ctx.get('im').registerChannel(channel);
 
+  // Web 设置页签（扫码绑定）：浏览器 ⇄ Host loopback RPC；无凭据也能扫码绑定。
+  const bindSession = internals.bindSession ?? createWeixinBindSession({ api, home });
+  const disposeRpc = installWeixinWebRpc(ctx, {
+    session: bindSession,
+    getStatus: () => channel.status,
+    log: logger,
+  });
+  const disposeAll = () => {
+    disposeRpc();
+    bindSession.cancel();
+    return channel.dispose();
+  };
+
   if (!botToken) {
-    logger.error('dsh-im-weixin: missing bot token — run `npx -y dsh-im-weixin-qr` to bind by scanning QR, or set WECHAT_BOT_TOKEN; channel stays disconnected | 缺少 bot token：请运行 `npx -y dsh-im-weixin-qr` 扫码绑定，或设置 WECHAT_BOT_TOKEN，通道保持断开');
-    return () => channel.dispose();
+    logger.error('dsh-im-weixin: missing bot token — scan to bind in Settings → 微信, run `npx -y dsh-im-weixin-qr`, or set WECHAT_BOT_TOKEN; channel stays disconnected | 缺少 bot token：可在网页设置「微信」页扫码绑定，或运行 `npx -y dsh-im-weixin-qr`，或设置 WECHAT_BOT_TOKEN，通道保持断开');
+    return disposeAll;
   }
 
   // ── 长轮询主循环 ────────────────────────────────────────────────────────
@@ -155,7 +170,7 @@ export function apply(ctx, config = {}, internals = {}) {
     void loop();
   })();
 
-  return () => channel.dispose();
+  return disposeAll;
 
   // ── 入站 ────────────────────────────────────────────────────────────────
 
