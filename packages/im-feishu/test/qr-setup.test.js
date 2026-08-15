@@ -79,7 +79,10 @@ test('runQrSetup：扫码成功 → 二维码回调 + 凭据落盘（0600）', a
   assert.equal(raw.appSecret, 'sec_test');
   assert.equal(raw.scannedBy, 'ou_scan');
   const mode = (await stat(res.credFile)).mode & 0o777;
-  assert.equal(mode, 0o600, '凭据文件仅本机可读');
+  // POSIX 上强制 0600；Windows 不实现 chmod 权限位（写时 mode 被忽略），不做该断言。
+  if (process.platform !== 'win32') {
+    assert.equal(mode, 0o600, '凭据文件仅本机可读');
+  }
   assert.ok(logs.some((l) => l.includes('✅')), '成功日志');
 });
 

@@ -9,10 +9,11 @@
 ## 扩展点（§8.3）
 
 ```js
-// 第三方渠道：实现 send() 契约后注册即可
+// 第三方渠道：实现 send() 契约后注册即可（支持打字机体验再加 edit()）
 ctx.im.registerChannel({
   platform: 'my-im',
-  send: async (out) => { /* 发消息 */ },
+  send: async (out) => { /* 发消息；返回 { messageId } 才能启用流式原地更新 */ },
+  edit: async (messageId, out) => { /* 可选：原地更新流式消息（首帧 send 后由核心逐帧调用） */ },
   sendFile: async (chatId, name, text, mime) => { /* 发文件 */ },
 });
 // 入站：构造 ImMessage 后交给核心
@@ -22,6 +23,10 @@ ctx.im.handleCallback({ platform, chatId, userId, userName, data });
 ```
 
 事件（其他插件可复用）：`im/message`、`im/command`、`im/dispatch`、`im/approval`。
+
+流式增量（`notifications.streamEdit`，默认开）：渠道实现 `edit()` 且 `send()` 返回真实
+`messageId` 时，增量首帧发送、后续帧原地编辑同一条消息；`edit()` 抛错自动回退逐条新消息。
+适配器契约细节见 [`docs/adapters-guide.md`](../../docs/adapters-guide.md) §七·一。
 
 ## 审批接线（FR-6）
 

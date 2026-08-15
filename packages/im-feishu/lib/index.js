@@ -22,13 +22,22 @@ import { installFeishuWebRpc } from './web-rpc.js';
 import { createFeishuProvisionSession } from './provision.js';
 
 const name = 'im-feishu';
-const inject = ['im', 'connection'];
+// connection 不是硬依赖：web 设置页签（扫码接入）需要它，但无 Connection RPC 的
+// 运行器组合（demo/feishu-real.mjs 的裸 Context）必须照样激活——installFeishuWebRpc
+// 会优雅降级。曾作为 inject 硬依赖导致此类组合里插件永远等待、apply 不执行。
+const inject = ['im'];
+
+/** 流式卡片正文上限（lark_md 字段限制内取保守值）。 */
+const STREAM_TAIL_CHARS = 2800;
+const STREAM_TITLE = 'DeepSeek Harness ⏳ 执行中';
 
 const Config = z.object({
   appId: z.string().default('env:FEISHU_APP_ID'),
   appSecret: z.string().default('env:FEISHU_APP_SECRET'),
   debug: z.boolean().default(false), // 打印收到的每个事件/入站/出站结果（排障用）
   logLevel: z.string().default('warn'), // SDK 日志级别（'error'|'warn'|'info'|'debug'）
+  /** 群聊仅回复 @机器人 的消息（私聊不受影响）。默认 true。 */
+  groupMentionOnly: z.boolean().default(true),
 });
 
 /** env 变量名 → 扫码凭据文件字段（bin/feishu-qr.mjs 的产物）。 */
@@ -57,6 +66,31 @@ export function resolveSecret(value, { home, read = readFileSync, env = process.
   return value;
 }
 
+/** 消息是否 @ 了机器人本人（mentions 条目 key / id.open_id 命中 botOpenId）。 */
+export function isBotMentioned(message, botOpenId) {
+  if (!botOpenId) return false;
+  const list = Array.isArray(message?.mentions) ? message.mentions : [];
+  return list.some((m) => (m?.key ?? '') === botOpenId || (m?.id?.open_id ?? '') === botOpenId);
+}
+
+/**
+ * 清理飞书文本里的 @_user_N 占位符：
+ * - 指代机器人自己的 → 移除
+ * - 其他被 @ 用户 → 替换为「@昵称」（无昵称则移除）
+ * mentions 数组下标 N-1 对应 @_user_N（飞书文本占位约定）。
+ */
+export function cleanMentions(text, mentions, botOpenId) {
+  if (typeof text !== 'string' || !text) return text;
+  const list = Array.isArray(mentions) ? mentions : [];
+  return text.replace(/@_user_(\d+)/g, (whole, idxRaw) => {
+    const m = list[Number(idxRaw) - 1];
+    const key = m?.key ?? m?.id?.open_id ?? '';
+    const name = m?.name ?? '';
+    if (botOpenId && key === botOpenId) return '';
+    return name ? `@${name}` : '';
+  }).replace(/ {2,}/g, ' ').trim();
+}
+
 export function apply(ctx, config = {}, internals = {}) {
   const appId = resolveSecret(config.appId);
   const appSecret = resolveSecret(config.appSecret);
@@ -65,8 +99,10 @@ export function apply(ctx, config = {}, internals = {}) {
   const log = (level, ...args) => {
     if (debug || level !== 'debug') logger[level](...args);
   };
-  // 可注入的依赖（测试用）：sdk = { Client, WSClient, EventDispatcher, LoggerLevel }
+  // 可注入的依赖（测试用）：sdk = { Client, WSClient, EventDispatcher, LoggerLevel }；
+  // fetchImpl = 群聊 @ 判定用的机器人身份查询载体（bot/v3/info）；botOpenId 可直接注入跳过查询。
   const sdk = internals.sdk ?? lark;
+  const fetchImpl = internals.fetchImpl ?? fetch;
 
   const logLevel = config.logLevel ?? 'warn';
   /** chatId → receive_id_type（'chat_id' | 'open_id'），入站时学习 */
@@ -76,6 +112,9 @@ export function apply(ctx, config = {}, internals = {}) {
   let dispatcher = null;
   let wsClient = null;
   let disposed = false;
+  /** 机器人自身 open_id（群聊 @ 判定用；懒加载，失败可重试） */
+  let botOpenId = typeof internals.botOpenId === 'string' && internals.botOpenId ? internals.botOpenId : null;
+  let botInfoPromise = null;
 
   const channel = {
     platform: 'feishu',
@@ -86,6 +125,7 @@ export function apply(ctx, config = {}, internals = {}) {
       lastEventAt: null, // 收到任何事件的时间戳（可观测性：连接活着 ≠ 事件在流）
     },
     send,
+    edit,
     sendFile,
     dispose: async () => {
       disposed = true;
@@ -121,7 +161,9 @@ export function apply(ctx, config = {}, internals = {}) {
   dispatcher = new sdk.EventDispatcher({ loggerLevel: sdk.LoggerLevel?.[logLevel] });
 
   dispatcher.register({
-    'im.message.receive_v1': (data) => handleMessage(data),
+    'im.message.receive_v1': (data) => {
+      void handleMessage(data).catch((err) => logger.warn('dsh-im-feishu: message handler failed | 消息处理失败: %s', err?.message ?? err));
+    },
     'card.action.trigger': (data) => handleCardAction(data),
   });
   if (debug) logger.info('dsh-im-feishu: event handlers registered (im.message.receive_v1 / card.action.trigger)');
@@ -151,7 +193,43 @@ export function apply(ctx, config = {}, internals = {}) {
 
   // ── 入站 ─────────────────────────────────────────────────────────────────
 
-  function handleMessage(data) {
+  /** 机器人身份懒加载：bot/v3/info → open_id；失败返回 null（下次群消息重试）。 */
+  async function ensureBotOpenId() {
+    if (botOpenId) return botOpenId;
+    if (!botInfoPromise) {
+      botInfoPromise = fetchBotInfo().then((id) => {
+        botOpenId = id;
+        logger.info('dsh-im-feishu: bot identity resolved | 机器人身份已解析');
+        return id;
+      }).catch((err) => {
+        logger.warn('dsh-im-feishu: bot info fetch failed | 机器人身份查询失败: %s', err?.message ?? err);
+        botInfoPromise = null; // 允许下次重试
+        return null;
+      });
+    }
+    return botInfoPromise;
+  }
+
+  /** 官方 REST：租户 token + bot/v3/info（SDK 无公开 bot 信息方法，直接走平台 API）。 */
+  async function fetchBotInfo() {
+    const tokenRes = await fetchImpl('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ app_id: appId, app_secret: appSecret }),
+    });
+    const tokenJson = await tokenRes.json();
+    const token = tokenJson?.tenant_access_token;
+    if (!token) throw new Error(`tenant token failed: ${JSON.stringify(tokenJson).slice(0, 120)}`);
+    const infoRes = await fetchImpl('https://open.feishu.cn/open-apis/bot/v3/info', {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const infoJson = await infoRes.json();
+    const openId = infoJson?.bot?.open_id;
+    if (!openId) throw new Error(`bot info missing open_id: ${JSON.stringify(infoJson).slice(0, 120)}`);
+    return openId;
+  }
+
+  async function handleMessage(data) {
     const im = ctx.get('im');
     const message = data?.message;
     if (!message) return;
@@ -163,8 +241,23 @@ export function apply(ctx, config = {}, internals = {}) {
     const chatId = String(message.chat_id ?? '');
     const chatType = message.chat_type === 'p2p' ? 'private' : 'group';
     chatIdKinds.set(chatId, 'chat_id');
+
+    // 群聊 @ 过滤：只有手动 @ 机器人的消息才回复（私聊不受影响）
+    if (chatType === 'group' && config.groupMentionOnly !== false) {
+      const botId = await ensureBotOpenId();
+      if (!botId) {
+        // 身份未知无法校验 @：失败关闭（skip），宁可漏回也不在群里刷屏
+        logger.warn('dsh-im-feishu: skipping group message — bot identity unavailable, cannot verify @mention | 跳过群消息：机器人身份未知，无法校验 @');
+        return;
+      }
+      if (!isBotMentioned(message, botId)) {
+        if (debug) logger.info('dsh-im-feishu: skipping group message without @mention (chatId=%s) | 群消息未 @ 机器人，跳过', chatId);
+        return;
+      }
+    }
+
     const openId = sender.sender_id?.open_id ?? sender.sender_id?.user_id ?? '';
-    const text = parseMessageContent(message);
+    const text = cleanMentions(parseMessageContent(message), message.mentions, botOpenId);
     void im.dispatchInbound({
       platform: 'feishu',
       chatId,
@@ -210,22 +303,65 @@ export function apply(ctx, config = {}, internals = {}) {
     const receiveId = out.chatId;
     const receiveIdType = kindFor(receiveId);
     if (out.buttons?.length) {
-      await sendCard(receiveId, receiveIdType, out);
-      return {};
+      const r = await sendCard(receiveId, receiveIdType, out);
+      return { messageId: r?.data?.message_id };
+    }
+    if (out.stream) {
+      const r = await sendStreamCard(receiveId, receiveIdType, out);
+      return { messageId: r?.data?.message_id };
     }
     if (out.text) {
-      try {
-        const r = await client.im.message.create({
-          params: { receive_id_type: receiveIdType },
-          data: { receive_id: receiveId, msg_type: 'text', content: JSON.stringify({ text: out.text }) },
-        });
-        if (debug) logger.info('dsh-im-feishu: text sent to %s (%s) ok=%s', receiveId, receiveIdType, r?.code === 0);
-      } catch (err) {
-        logger.error('dsh-im-feishu: send to %s failed | 发送失败: %s (code=%s msg=%s)', receiveId, err?.message ?? err, err?.code, err?.msg);
-        throw err;
-      }
+      const r = await client.im.message.create({
+        params: { receive_id_type: receiveIdType },
+        data: { receive_id: receiveId, msg_type: 'text', content: JSON.stringify({ text: out.text }) },
+      });
+      ensureOk(r, `text to ${receiveId}`);
+      if (debug) logger.info('dsh-im-feishu: text sent to %s (%s) ok=%s', receiveId, receiveIdType, r?.code === 0);
+      return { messageId: r?.data?.message_id };
     }
     return {};
+  }
+
+  /** 流式原地更新（打字机体验）：核心发首帧后持 messageId 连续调用本方法。 */
+  async function edit(messageId, out) {
+    const r = await client.im.message.patch({
+      path: { message_id: String(messageId) },
+      data: { content: JSON.stringify(buildStreamCard(out)) },
+    });
+    ensureOk(r, `patch ${messageId}`);
+    return {};
+  }
+
+  /** 业务失败（code != 0）必须抛出并带平台错误码——绝不静默吞掉（AGENTS.md 可观测三件套）。 */
+  function ensureOk(r, what) {
+    if (!r || r.code !== 0) {
+      const err = new Error(`feishu ${what} failed: code=${r?.code ?? 'n/a'} msg=${r?.msg ?? String(r)}`);
+      err.code = r?.code;
+      err.msg = r?.msg;
+      throw err;
+    }
+  }
+
+  /** 流式卡片：lark_md 正文 + 实时提示脚注。核心已做尾部截断，这里再兜底一次。 */
+  function buildStreamCard(out) {
+    const text = String(out.text ?? '').slice(-STREAM_TAIL_CHARS);
+    return {
+      config: { wide_screen_mode: true },
+      header: { title: { tag: 'plain_text', content: out.title ?? STREAM_TITLE }, template: 'blue' },
+      elements: [
+        { tag: 'div', text: { tag: 'lark_md', content: text || '…' } },
+        { tag: 'note', elements: [{ tag: 'plain_text', content: '🔄 实时输出中 · 完整结果：回复 /log' }] },
+      ],
+    };
+  }
+
+  async function sendStreamCard(receiveId, receiveIdType, out) {
+    const r = await client.im.message.create({
+      params: { receive_id_type: receiveIdType },
+      data: { receive_id: receiveId, msg_type: 'interactive', content: JSON.stringify(buildStreamCard(out)) },
+    });
+    ensureOk(r, `stream card to ${receiveId}`);
+    return r;
   }
 
   async function sendCard(receiveId, receiveIdType, out) {
@@ -237,16 +373,18 @@ export function apply(ctx, config = {}, internals = {}) {
     }));
     const card = {
       config: { wide_screen_mode: true },
-      header: { title: { tag: 'plain_text', content: '🔐 审批请求' }, template: 'blue' },
+      header: { title: { tag: 'plain_text', content: out.title ?? '🔐 审批请求' }, template: 'blue' },
       elements: [
         { tag: 'div', text: { tag: 'lark_md', content: out.text } },
         { tag: 'action', actions },
       ],
     };
-    await client.im.message.create({
+    const r = await client.im.message.create({
       params: { receive_id_type: receiveIdType },
       data: { receive_id: receiveId, msg_type: 'interactive', content: JSON.stringify(card) },
     });
+    ensureOk(r, `card to ${receiveId}`);
+    return r;
   }
 
   /** 按钮 id（approve:<id>:yes）→ 卡片 value（回调原样回传）。 */

@@ -14,16 +14,30 @@ afterEach(() => {
   for (const m of liveMaps.splice(0)) m.dispose();
 });
 
-function makeBus({ quietHours = [], onlineWindowMin = 10, streamWhileOnline = true } = {}) {
+function makeBus({ quietHours = [], onlineWindowMin = 10, streamWhileOnline = true, withEdit = false, failEdit = false } = {}) {
   const sent = [];
+  const edits = [];
   const map = new SessionMap(mkdtempSync(join(tmpdir(), 'im-notify-')));
   liveMaps.push(map);
   map.create('mock', 'c1', { chatType: 'private' });
   map.touch('mock', 'c1', 'u1', 'Alice');
+  const send = async (chat, out) => {
+    const messageId = withEdit ? `mock-msg-${sent.length + 1}` : undefined;
+    sent.push({ ...out, chat, ...(messageId ? { messageId } : {}) });
+    return messageId ? { messageId } : {};
+  };
+  const edit = withEdit
+    ? async (chat, messageId, out) => {
+        edits.push({ chat, messageId, out });
+        if (failEdit) throw new Error('mock patch failed');
+        return {};
+      }
+    : null;
   const bus = new NotifyBus({
     ctx: { on: () => () => {} },
     map,
-    send: async (chat, out) => { sent.push({ ...out, chat }); return {}; },
+    send,
+    edit,
     log: () => {},
     lastUserTextFor: () => '跑一下 pytest',
   });
@@ -32,7 +46,7 @@ function makeBus({ quietHours = [], onlineWindowMin = 10, streamWhileOnline = tr
     pricing: { inputPerM: 1, outputPerM: 16 }, quietHours, streamWhileOnline,
     onlineWindowMin, flushIntervalMs: 400,
   });
-  return { bus, map, sent };
+  return { bus, map, sent, edits };
 }
 
 test('turn/end 推送结果卡片（在线时）', async () => {
@@ -141,4 +155,60 @@ test('流式增量：在线时按 flush 间隔推送（FR-3.3），turn/end 记�
   await new Promise((r) => setTimeout(r, 20));
   const card = sent.find((m) => m.text.includes('任务完成'));
   assert.ok(card.text.includes('⏱'), '结果卡片带耗时');
+});
+
+test('流式增量：渠道支持 edit → 首帧发送、后续帧原地编辑（消息数不增长）', async () => {
+  const { bus, map, sent, edits } = makeBus({ withEdit: true });
+  const binding = map.get('mock', 'c1');
+  const sid = binding.sessionId;
+  bus.onSessionEvent({ id: sid }, {
+    type: 'assistant/chunk',
+    data: { chunk: { type: 'text-delta', index: 0, text: 'A'.repeat(50) } },
+  });
+  // 等首帧 flush（400ms 定时器）
+  const deadline = Date.now() + 3000;
+  while (!sent.some((m) => m.stream) && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  assert.equal(sent.filter((m) => m.stream).length, 1, '首帧发送一条流式消息');
+  assert.ok(sent.find((m) => m.stream).messageId, '首帧记录 messageId');
+  // 第二帧直接 flush：应走 edit，不发新消息
+  bus.appendStream(binding, 'B'.repeat(50));
+  await bus.flush(bus.state(sid), false);
+  assert.equal(sent.filter((m) => m.stream).length, 1, '后续增量不产生新消息');
+  assert.equal(edits.length, 1, '后续增量走 edit');
+  // 蓄水池按帧清空：edit 帧只携带本批次增量（卡片为原地替换语义）
+  assert.ok(edits[0].out.text.includes('BBBB'), 'edit 内容含新帧');
+  assert.equal(edits[0].messageId, 'mock-msg-1', 'edit 目标为首帧消息');
+});
+
+test('流式增量：edit 失败 → 回退发新消息（内容不丢）', async () => {
+  const { bus, map, sent, edits } = makeBus({ withEdit: true, failEdit: true });
+  const binding = map.get('mock', 'c1');
+  const sid = binding.sessionId;
+  bus.onSessionEvent({ id: sid }, {
+    type: 'assistant/chunk',
+    data: { chunk: { type: 'text-delta', index: 0, text: 'A'.repeat(50) } },
+  });
+  const deadline = Date.now() + 3000;
+  while (!sent.some((m) => m.stream) && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  bus.appendStream(binding, 'B'.repeat(50));
+  await bus.flush(bus.state(sid), false);
+  assert.equal(edits.length, 1, 'edit 被尝试');
+  assert.equal(sent.filter((m) => m.stream).length, 2, 'edit 失败后回退发送新消息');
+  assert.ok(sent.at(-1).text.includes('BBBB'), '新消息包含未交付的增量');
+});
+
+test('蓄水池上限：超长离线输出只保留尾部（完整输出走 /log）', async () => {
+  const { bus, map } = makeBus({ onlineWindowMin: 0 });
+  const binding = map.get('mock', 'c1');
+  // 确定性离线：把活跃时间拨回过去——touch 与 appendStream 可能落在同一毫秒，
+  // isOnline 的 <= 判定会误判为在线（历史 flake 根因）。
+  binding.lastActivityAt = Date.now() - 60_000;
+  bus.appendStream(binding, 'x'.repeat(5000));
+  const s = bus.state(binding.sessionId);
+  assert.ok(s.reservoir.length <= 3500, '蓄水池有上限');
+  assert.equal(s.reservoir, 'x'.repeat(3500), '超出部分从头部丢弃（保留最新尾部）');
 });

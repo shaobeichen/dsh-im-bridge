@@ -48,9 +48,18 @@ export class MockChannel {
 
   /** 渠道契约：send()。 */
   async send(out) {
-    const record = { ...out, platform: this.platform, at: Date.now() };
+    const messageId = `mock-${this.sent.length + 1}`;
+    const record = { ...out, platform: this.platform, messageId, at: Date.now() };
     this.sent.push(record);
-    return { messageId: `mock-${this.sent.length}` };
+    return { messageId };
+  }
+
+  /** 渠道契约：edit() —— 原地更新（替换记录内容，保留时间戳与 messageId）。 */
+  async edit(messageId, out) {
+    const idx = this.sent.findIndex((m) => m.messageId === messageId);
+    if (idx < 0) return {};
+    this.sent[idx] = { ...this.sent[idx], ...out, messageId, editedAt: Date.now() };
+    return { messageId };
   }
 
   /** 测试断言辅助：发给某 chat 的所有消息文本。 */

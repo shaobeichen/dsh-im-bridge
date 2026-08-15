@@ -25,6 +25,9 @@ dsh plugin --profile web add dsh-im dsh-im-feishu -w       # 飞书
 装完插件自带默认配置（`dsh.bundle` 自动应用），**不需要手动改配置文件**。
 
 > 如果报 `ERR_PNPM_ADDING_TO_ROOT`（pnpm 9 在 workspace 根的限制），在命令末尾加 `-w`（`--workspace-root`）即可——上面已默认带上。
+>
+> `dsh plugin` 内部转发 pnpm；若本机没有 pnpm 会报 `pnpm: command not found`（Windows 常见），先装：
+> `npm install -g pnpm`，然后重试。
 
 ## 2. 配凭据（环境变量）
 

@@ -62,6 +62,7 @@ const Config = z.object({
     }), // 0=仅显示 token，不估算金额
     quietHours: z.array(z.string()).default([]),      // 如 ["22:00-08:00"]（FR-5.4）
     streamWhileOnline: z.boolean().default(true),      // FR-3.3/5.5
+    streamEdit: z.boolean().default(true),             // 渠道支持 edit() 时原地更新流式消息（打字机体验）
     onlineWindowMin: z.number().default(10),           // FR-5.5 在线判定窗口
     flushIntervalMs: z.number().default(400),
   }),
@@ -139,6 +140,7 @@ export class ImRuntime extends Service {
       ctx: this.ctx,
       map: this.map,
       send: (chat, out) => this.send(chat, out),
+      edit: (chat, messageId, out) => this.edit(chat, messageId, out),
       log: (line) => this.log.info(line),
       lastUserTextFor: (sessionId) => this.lastUserTexts.get(sessionId) ?? '',
     });
@@ -150,6 +152,7 @@ export class ImRuntime extends Service {
       pricing: cfg.notifications.pricing ?? null,
       quietHours: cfg.notifications.quietHours ?? [],
       streamWhileOnline: cfg.notifications.streamWhileOnline,
+      streamEdit: cfg.notifications.streamEdit,
       onlineWindowMin: cfg.notifications.onlineWindowMin,
       flushIntervalMs: cfg.notifications.flushIntervalMs,
     });
@@ -203,6 +206,17 @@ export class ImRuntime extends Service {
     const channel = this.channels.get(platform);
     if (!channel) throw new Error(`im: no channel registered for "${platform}"`);
     return channel.send({ ...out, platform, chatId });
+  }
+
+  /** 流式原地更新路由：统一模型 → 渠道 edit()（渠道未实现时抛错，调用方回退发新消息）。 */
+  async edit({ platform, chatId }, messageId, out) {
+    await this._ready;
+    const channel = this.channels.get(platform);
+    if (!channel) throw new Error(`im: no channel registered for "${platform}"`);
+    if (typeof channel.edit !== 'function') {
+      throw new Error(`im: channel "${platform}" does not implement edit()`);
+    }
+    return channel.edit(String(messageId), { ...out, platform, chatId });
   }
 
   /** 出站路由（显式目标，含按钮/附件），供其他插件复用。 */
@@ -319,8 +333,10 @@ export class ImRuntime extends Service {
       this.map.addToAllowlist(platform, userId);
       this.log.info(`trust-on-first-contact: auto-trusted ${platform}:${userId} | 首次接触：已自动信任 ${platform}:${userId}`);
       await this.send({ platform, chatId }, {
-        text: `👋 首次接触，已自动信任 ${userName ?? userId}（security.trustOnFirstContact=true）。\n发送 /new 创建会话开始派活。`,
+        text: `👋 首次接触，已自动信任 ${userName ?? userId}（security.trustOnFirstContact=true）。`,
       });
+      // 不吞掉首条任务：信任后立即按正常流程派发（autoCreate=true 时直接建会话执行）
+      await this.dispatchTask(msg);
       return;
     }
 
@@ -334,6 +350,7 @@ export class ImRuntime extends Service {
         if (!admin) continue;
         await this.send({ platform: admin.platform, chatId: admin.userId }, {
           text: `🔐 信任确认：用户 ${userName ?? userId}（${platform}）想与 agent 对话。\n回复 /trust ${pending} 信任，或 /revoke ${pending} 拒绝。`,
+          title: '🔐 信任确认',
           buttons: [{ id: `trust:${platform}:${userId}`, label: '✅ 信任', style: 'primary' }],
         }).catch(() => {});
       }
@@ -533,6 +550,13 @@ export class ImRuntime extends Service {
       descEn: 'approve/reject by text',
       run: (c, args) => c.core.commandApprove(c.msg, args),
     });
+    registerCommand('stop', {
+      perm: 'user',
+      usage: '',
+      desc: '停止当前正在运行的任务',
+      descEn: 'stop the running task',
+      run: (c) => c.core.commandStop(c.msg),
+    });
     registerCommand('trust', {
       perm: 'admin',
       usage: '<platform:userId>',
@@ -682,6 +706,24 @@ export class ImRuntime extends Service {
       forbidden: `⛔ 无权限：审批需要 allowlist 成员身份。`,
     };
     await this.send({ platform: msg.platform, chatId: msg.chatId }, { text: texts[result] ?? `ℹ️ ${result}` });
+  }
+
+  async commandStop(msg) {
+    const { platform, chatId } = msg;
+    const binding = this.map.get(platform, chatId);
+    if (!binding) {
+      return this.send({ platform, chatId }, { text: 'ℹ️ 尚未创建会话。' });
+    }
+    const agent = this.ctx.agents.get(binding.sessionId);
+    if (!agent) {
+      return this.send({ platform, chatId }, { text: 'ℹ️ 会话不在线（重启后需先发一条消息恢复）。' });
+    }
+    if (agent.status === 'idle') {
+      return this.send({ platform, chatId }, { text: 'ℹ️ 当前没有运行中的任务。' });
+    }
+    agent.cancel({ kind: 'user' });
+    this.log.info(`/stop: cancelled ${binding.sessionId} | 已请求停止 ${binding.sessionId}`);
+    await this.send({ platform, chatId }, { text: '⏹️ 已请求停止当前任务。' });
   }
 
   async commandTrust(msg, args) {

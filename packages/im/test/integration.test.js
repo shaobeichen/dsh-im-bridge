@@ -21,7 +21,7 @@ import ApprovalService from '@deepseek-ai/dsh-user-approval';
 import { LlmAdapter } from '@deepseek-ai/dsh-llm';
 import { defineContentToolFixture } from '@deepseek-ai/dsh-tools';
 
-import ImRuntime from '../lib/index.js';
+import ImRuntime, { sessionIdFor } from '../lib/index.js';
 import { MockChannel } from '../lib/mock-channel.js';
 
 /** 脚本化 mock LLM：按请求顺序播放 chunk 序列。 */
@@ -38,6 +38,7 @@ class ScriptedAdapter extends LlmAdapter {
       return `${m.role}:${String(text ?? '').slice(0, 80)}`;
     }));
     const step = this.script[Math.min(this.calls++, this.script.length - 1)];
+    if (step.delayMs) await new Promise((r) => setTimeout(r, step.delayMs));
     for (const chunk of step.chunks) yield chunk;
   }
 }
@@ -265,6 +266,59 @@ test('管理员只配 admins（allowlist 留空）也能直接通过安全门（
       timeoutMs: 8000,
     });
     assert.ok(!mock.sent.some((m) => m.text.includes('未授权')), 'admin 不应被安全门拦截');
+  } finally {
+    await teardown();
+  }
+});
+
+test('首次接触自动信任 → 首条任务不丢失（信任后直接派发并返回结果）', async () => {
+  const script = [
+    {
+      chunks: [
+        { type: 'text-delta', index: 0, text: '收到，已开始处理你的第一个任务 ✅' },
+        { type: 'finish', reason: { kind: 'stop' } },
+      ],
+    },
+  ];
+  const { mock, teardown } = await setup(script, {
+    security: { allowlist: [], admins: [], autoCreate: true, trustOnFirstContact: true },
+  });
+  try {
+    await mock.sendFromUser({ chatId: 'c3', userId: 'new-user', userName: '新人', text: '帮我跑一下测试' });
+    const result = await waitFor(
+      () => mock.sent.find((m) => m.text.includes('任务完成')),
+      { label: 'first task result card', timeoutMs: 8000 },
+    );
+    assert.ok(result.text.includes('已开始处理你的第一个任务'), '首条任务直接派发并得到结果卡片');
+    assert.ok(mock.sent.some((m) => m.text.includes('已自动信任')), '欢迎语仍在（信任提示）');
+  } finally {
+    await teardown();
+  }
+});
+
+test('/stop：中断正在运行的任务（结果卡片标记已取消）', async () => {
+  const script = [
+    {
+      delayMs: 4000,
+      chunks: [
+        { type: 'text-delta', index: 0, text: '慢任务的输出（本应被取消）' },
+        { type: 'finish', reason: { kind: 'stop' } },
+      ],
+    },
+  ];
+  const { ctx, mock, teardown } = await setup(script);
+  try {
+    await mock.sendFromUser({ text: '开始一个慢任务' });
+    const agent = await waitFor(() => {
+      const a = ctx.get('agents').get(sessionIdFor('mock', 'chat-1'));
+      return a && a.status !== 'idle' ? a : null;
+    }, { label: 'agent busy' });
+    assert.ok(agent, 'agent 进入运行状态');
+    await mock.sendFromUser({ text: '/stop' });
+    const ack = await waitFor(() => mock.sent.find((m) => m.text.includes('已请求停止')), { label: '/stop ack' });
+    assert.ok(ack, '/stop 收到确认');
+    const card = await waitFor(() => mock.sent.find((m) => m.text.includes('任务已取消')), { label: 'aborted card', timeoutMs: 8000 });
+    assert.ok(card, 'turn 以 aborted 结束并推送取消卡片');
   } finally {
     await teardown();
   }

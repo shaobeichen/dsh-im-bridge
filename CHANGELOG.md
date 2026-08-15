@@ -6,6 +6,21 @@
 
 ### 新增
 
+- **`/stop` 命令（真实飞书联调需求）**：停止当前正在运行的任务（`agent.cancel({kind:'user'})`，
+  turn 以 aborted 收尾并推送「任务已取消」卡片）；此前任务卡住时从 IM 无法打断，只能重启。
+  含集成测试（慢任务 + /stop → 取消卡片）
+- **飞书群聊 @ 过滤（真实飞书联调需求）**：`groupMentionOnly`（默认 true）——群聊中只有手动
+  @ 机器人的消息才派发，其他消息不响应（私聊不受影响）。判定经机器人身份查询
+  （`bot/v3/info`，懒加载 + 内存缓存 + 失败可重试）；身份查询失败时群聊消息失败关闭
+  （宁可漏回不刷屏）。@ 占位符清洗：机器人自身移除、他人替换为「@昵称」（纯函数 + 单测）
+- **流式消息原地更新（打字机体验，对照成熟 Claude Code↔IM 桥）**：核心新增
+  `notifications.streamEdit`（默认开）——渠道实现 `edit()` 且 `send()` 返回真实 messageId 时，
+  流式增量首帧发送、后续帧原地编辑同一条消息；`edit()` 失败或渠道不支持时自动回退逐条新消息，
+  绝不丢内容。出站消息模型新增 `title`（卡片标题）与 `stream`（流式帧）字段
+- **飞书流式卡片**：适配器实现 `edit()`（`im.message.patch` 原地更新 interactive 卡片，
+  飞书不支持 patch 文本消息）；流式帧渲染为 lark_md 卡片（2800 字符兜底截断 + 实时提示脚注）
+- **出站业务失败即抛出**：飞书 `send/edit/sendCard` 对 `code != 0` 一律 throw 并带平台
+  错误码（`err.code`/`err.msg`），不再静默吞掉（AGENTS.md 可观测三件套）
 - **网页扫码接入（设置 → 插件 → 飞书 / 微信 页签）**：二维码直接在 DeepSeek Harness 网页里显示，
   手机扫码确认（微信含配对数字输入框）→ 凭据写入 Host 本机 → 重启生效。全程不碰终端；
   loopback RPC（`ctx.connection.rpc`）+ 官方 SDK 流程，App Secret / bot_token 不进浏览器
@@ -16,14 +31,35 @@
   权限/事件/回调预填），凭据自动写入 `$DSH_HOME/dsh-im/feishu-credentials.json`；
   `resolveSecret` 在 env 为空时自动回退扫码文件（env 仍优先）
 
-### 工程
-
-- 仓库根变成可安装 bundle（根 `cordis.patch.yml` 注册 4 个插件 + 根依赖指向 npm 发布包）：`dsh plugin add github:shaobeichen/dsh-im-bridge` 一键装齐核心+三渠道（awesome-dsh-plugin / dshmarket 收录路径打通）
-- 版本号与 npm 对齐（4 包 + 根包 1.0.2，渠道 peer `^1.0.2`）；发布 workflow 现在会在 Release 后**把版本同步自动提交回仓库**（零本地命令，仓库 package.json 永远与 npm 一致）
-
 ### 修复
 
+- **Windows 兼容**（此前 3 个用例在 Windows 失败）：
+  - `demo/policy.test.js`：POSIX 路径字面量 → node:path 平台无关期望值
+  - 凭据落盘 0600 断言（feishu/weixin 扫码测试）：POSIX 强制，Windows 跳过（chmod 权限位不生效）
+  - `demo/mock-demo.mjs` / `demo/workspace-tools.mjs`：硬编码 `/bin/bash` → 新增跨平台
+    `demo/shell.mjs`（Windows 优先 pwsh，缺失回退 powershell.exe），真实模式在 Windows 可跑
+- **通知蓄水池上限**：`MAX_RESERVOIR` 此前定义未用——超长离线输出会无限占用内存；
+  现在超限保留最新尾部，完整输出走 `/log`
+- **流式离线判定 flake**：`isOnline` 毫秒边界（touch 与 appendStream 同毫秒被判在线）导致
+  测试偶发；测试改为确定性离线，并消除其连带时序抖动
+- **首次接触自动信任不再吞掉首条任务（真实飞书联调发现）**：`trustOnFirstContact=true` 时
+  原实现发完欢迎语就返回，用户的第一条真实任务被丢弃、必须重发；现在信任后立即按正常
+  流程派发（autoCreate=true 时直接建会话执行），并补集成测试
+- **`connection` 硬依赖致插件永不激活（真实飞书联调发现）**：飞书/微信适配器曾把
+  `connection` 写进 `inject`——demo 运行器的裸 Context 没有该服务时插件永远 waiting、
+  apply 不执行、进程空转退出；而 web 设置页签本就优雅降级。改为可选依赖（web-rpc 用
+  `ctx.get('connection')` 读取，本 Cordis 变体对未注入属性访问直接抛错），并补两个
+  激活回归测试（真实 Cordis Context 无 connection 挂载插件）
+- **文档**：install.md 补充 Windows 缺 pnpm 的安装前置说明
 - **安全门体验**：管理员（`security.admins`）隐式放行，不再要求重复写 `allowlist`——普通用户零配置，首接触由管理员一键 `/trust` 确认（FR-8.2/9.2）；全空配置时启动给出双语引导提示（`im.security.admins: ["平台:userId"]`），未授权回复附上同样的可抄配置
+
+### 工程
+
+- **CI 双平台矩阵**：`ubuntu-latest` + `windows-latest`（node 22），防止 Windows 兼容回归
+- 新增 `demo/shell.test.js`（跨平台 shell 执行器单测）；notify 测试新增 edit 路径/失败回退/
+  蓄水池上限 3 例；飞书测试新增流式卡片/patch/业务失败/超长截断 4 例（全套 120 例全绿）
+- 仓库根变成可安装 bundle（根 `cordis.patch.yml` 注册 4 个插件 + 根依赖指向 npm 发布包）：`dsh plugin add github:shaobeichen/dsh-im-bridge` 一键装齐核心+三渠道（awesome-dsh-plugin / dshmarket 收录路径打通）
+- 版本号与 npm 对齐（4 包 + 根包 1.0.2，渠道 peer `^1.0.2`）；发布 workflow 现在会在 Release 后**把版本同步自动提交回仓库**（零本地命令，仓库 package.json 永远与 npm 一致）
 
 ### 已实现（v0.1.0-rc 候选）
 

@@ -7,9 +7,12 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Ubuntu + Windows 双平台：Windows 上 chmod 权限位不生效、路径分隔符不同，
+    # 测试与 demo 运行器必须保持平台无关（历史教训：3 个用例曾在 Windows 上失败）。
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest]
         node: [22]
     steps:
       - uses: actions/checkout@v4
@@ -23,4 +26,7 @@ jobs:
           # 测试全部无需真实凭据；显式置空防止误用
           DEEPSEEK_API_KEY: ''
           FEISHU_APP_ID: ''
+          FEISHU_APP_SECRET: ''
+          TELEGRAM_BOT_TOKEN: ''
+          WECHAT_BOT_TOKEN: ''
           WECOM_CORP_ID: ''

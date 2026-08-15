@@ -27,6 +27,7 @@
           pricing: { inputPerM: 0, outputPerM: 0 }   # 0 = 仅显示 token，不估算金额
           quietHours: []                      # 如 ["22:00-08:00"]（FR-5.4）
           streamWhileOnline: true             # FR-3.3/5.5
+          streamEdit: true                    # 渠道支持 edit() 时原地更新流式消息（打字机体验）；关闭=逐条新消息
           onlineWindowMin: 10
           flushIntervalMs: 400
         agent:

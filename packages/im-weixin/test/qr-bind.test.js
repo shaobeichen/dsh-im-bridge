@@ -46,7 +46,10 @@ test('扫码 → 确认 → 凭据落盘（0600）', async () => {
   const raw = JSON.parse(await readFile(res.credFile, 'utf8'));
   assert.equal(raw.botToken, 'tok_1');
   assert.equal(raw.accountId, 'ilink_bot_1');
-  assert.equal((await stat(res.credFile)).mode & 0o777, 0o600);
+  // POSIX 上强制 0600；Windows 不实现 chmod 权限位（写时 mode 被忽略），不做该断言。
+  if (process.platform !== 'win32') {
+    assert.equal((await stat(res.credFile)).mode & 0o777, 0o600);
+  }
 });
 
 test('配对数字流程：need_verifycode → 输入 → confirmed', async () => {

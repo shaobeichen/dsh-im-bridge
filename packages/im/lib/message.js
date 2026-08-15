@@ -25,6 +25,10 @@
  * @property {string} text           文本（核心渲染器已转纯文本）
  * @property {Array<{id:string, label:string, style?:'primary'|'danger'|'default'}>} [buttons]
  *                                    内联按钮；id 为不透明回调载荷（审批用 'approve:<id>:yes' 等）
+ * @property {string} [title]        卡片标题（有按钮或流式卡片时使用；适配器可忽略）
+ * @property {boolean} [stream]      流式增量帧：渠道支持 edit() 时应渲染为可原地更新的
+ *                                    消息（如飞书交互卡片），并在 send 结果中返回 messageId；
+ *                                    不支持 edit() 的渠道按普通文本发送即可
  * @property {Array<{kind:'file'|'image', name?:string, text?:string, path?:string}>} [attachments]
  *                                    文件/图片（/log 全量交付，FR-3.4）
  * @property {boolean} [silent]       静默推送（通知可选）
@@ -33,7 +37,8 @@
 /**
  * 出站结果。
  * @typedef {Object} OutboundResult
- * @property {string} [messageId]  平台消息 id（供 edit 使用）
+ * @property {string} [messageId]  平台消息 id（供 edit 使用；渠道必须返回真实 id，
+ *                                 否则核心无法原地更新流式消息）
  */
 
 /** 聊天标识（平台+chatId 的唯一键）。 */

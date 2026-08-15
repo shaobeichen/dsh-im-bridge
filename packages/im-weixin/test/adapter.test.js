@@ -13,7 +13,9 @@ import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { apply, resolveSecret, resolveBaseUrl } from '../lib/index.js';
+import { Context } from '@deepseek-ai/cordis';
+
+import { apply, resolveSecret, resolveBaseUrl, plugin as weixinPlugin } from '../lib/index.js';
 import { createFakeIlinkServer } from './fake-ilink-server.js';
 
 function fakeIm() {
@@ -134,4 +136,17 @@ test('resolveSecret / resolveBaseUrl：扫码凭据文件回退', async () => {
   assert.equal(resolveSecret('env:WECHAT_BOT_TOKEN', { home, env: { WECHAT_BOT_TOKEN: 'tok_env' } }), 'tok_env');
   // 无文件且 env 空 → 空串
   assert.equal(resolveSecret('env:WECHAT_BOT_TOKEN', { home: '/nonexistent', env: {} }), '');
+});
+
+test('无 Connection 服务：插件仍激活（回归：inject 不得硬依赖 connection）', async () => {
+  // 与 dsh-im-feishu 同因的历史缺陷：inject 硬依赖 connection 时，裸 Context
+  // 运行器里插件永远 waiting、apply 不执行。web 设置页签本来就优雅降级。
+  const im = fakeIm();
+  const ctx = new Context();
+  ctx.provide('im', im);
+  const handle = ctx.plugin(weixinPlugin, { botToken: '', ownerUserId: '' });
+  await handle.await();
+  assert.ok(im.channel, 'apply 已执行：渠道已注册');
+  assert.equal(im.channel.status.connected, false);
+  await handle.dispose();
 });
