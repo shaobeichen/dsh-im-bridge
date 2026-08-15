@@ -87,7 +87,7 @@ test('runQrSetup：注册未返回凭据 → 抛错，不写文件', async () =>
   const home = await mkdtemp(join(tmpdir(), 'qr-home-'));
   const { lark } = fakeLark({ result: { client_id: '', client_secret: '' } });
   await assert.rejects(
-    () => runQrSetup({ lark, home }),
+    () => runQrSetup({ lark, home, log: () => {}, renderQr: () => {} }),
     /no credentials/
   );
   await assert.rejects(readFile(join(home, 'dsh-im', 'feishu-credentials.json')), /ENOENT/);
