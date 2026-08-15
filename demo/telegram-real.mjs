@@ -18,15 +18,15 @@ const MOCK_LLM = argv.includes('--mock-llm');
 const DEBUG = argv.includes('--debug');
 
 if (MODE !== 'demo' && MODE !== 'prod') {
-  console.error(`❌ 未知模式 ${MODE}（支持 demo | prod）`);
+  console.error(`Unknown mode ${MODE} (demo | prod) | 未知模式 ${MODE}（支持 demo | prod）`);
   process.exit(1);
 }
 if (!process.env.TELEGRAM_BOT_TOKEN) {
-  console.error('❌ 需要 TELEGRAM_BOT_TOKEN（找 @BotFather 创建 bot 获取）。');
+  console.error('TELEGRAM_BOT_TOKEN is required (create a bot via @BotFather) | 需要 TELEGRAM_BOT_TOKEN（找 @BotFather 创建 bot 获取）。');
   process.exit(1);
 }
 if (!MOCK_LLM && !process.env.DEEPSEEK_API_KEY) {
-  console.error('❌ 需要 DEEPSEEK_API_KEY（或用 --mock-llm 走脚本化模型，仅 demo 模式）。');
+  console.error('DEEPSEEK_API_KEY is required (or use --mock-llm in demo mode) | 需要 DEEPSEEK_API_KEY（或用 --mock-llm 走脚本化模型，仅 demo 模式）。');
   process.exit(1);
 }
 

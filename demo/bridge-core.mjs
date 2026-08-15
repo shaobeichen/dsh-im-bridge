@@ -55,10 +55,10 @@ export async function bootBridge({ mode = 'demo', mockLLM = false, allowShell = 
   const allowlist = csv('IM_ALLOWLIST');
   const admins = csv('IM_ADMINS');
   if (mode === 'prod') {
-    if (mockLLM) throw new Error('prod 模式禁止 --mock-llm');
-    if (allowShell) throw new Error('prod 模式禁止 --allow-shell（本机无沙箱后端）');
+    if (mockLLM) throw new Error('--mock-llm is forbidden in prod mode | prod 模式禁止 --mock-llm');
+    if (allowShell) throw new Error('--allow-shell is forbidden in prod mode (no sandbox backend on this host) | prod 模式禁止 --allow-shell（本机无沙箱后端）');
     if (allowlist.length === 0 || admins.length === 0) {
-      throw new Error('prod 模式必须配置 IM_ALLOWLIST 和 IM_ADMINS（逗号分隔的 feishu:<open_id> / wecom:<userid>）——默认全禁才是安全默认（PRD §10）');
+      throw new Error('prod mode requires IM_ALLOWLIST and IM_ADMINS (comma-separated feishu:<open_id> / wecom:<userid>). Deny-all is the safe default (PRD §10) | prod 模式必须配置 IM_ALLOWLIST 和 IM_ADMINS（逗号分隔的 feishu:<open_id> / wecom:<userid>）——默认全禁才是安全默认（PRD §10）');
     }
   }
 

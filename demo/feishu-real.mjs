@@ -23,15 +23,15 @@ const MOCK_LLM = argv.includes('--mock-llm');
 const DEBUG = argv.includes('--debug');
 
 if (MODE !== 'demo' && MODE !== 'prod') {
-  console.error(`❌ 未知模式 ${MODE}（支持 demo | prod）`);
+  console.error(`Unknown mode ${MODE} (demo | prod) | 未知模式 ${MODE}（支持 demo | prod）`);
   process.exit(1);
 }
 if (!process.env.FEISHU_APP_ID || !process.env.FEISHU_APP_SECRET) {
-  console.error('❌ 需要 FEISHU_APP_ID / FEISHU_APP_SECRET（飞书开放平台自建应用的凭证）。');
+  console.error('FEISHU_APP_ID / FEISHU_APP_SECRET are required (create an app on the Feishu Open Platform) | 需要 FEISHU_APP_ID / FEISHU_APP_SECRET（飞书开放平台自建应用的凭证）。');
   process.exit(1);
 }
 if (!MOCK_LLM && !process.env.DEEPSEEK_API_KEY) {
-  console.error('❌ 需要 DEEPSEEK_API_KEY（或用 --mock-llm 走脚本化模型，仅 demo 模式）。');
+  console.error('DEEPSEEK_API_KEY is required (or use --mock-llm in demo mode) | 需要 DEEPSEEK_API_KEY（或用 --mock-llm 走脚本化模型，仅 demo 模式）。');
   process.exit(1);
 }
 

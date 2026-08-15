@@ -178,7 +178,7 @@ export class ImRuntime extends Service {
     }
     if (typeof channel.attach === 'function') channel.attach(this);
     this.channels.set(channel.platform, channel);
-    this.log.info(`channel "${channel.platform}" registered`);
+    this.log.info(`channel "${channel.platform}" registered | 渠道已注册`);
     return () => {
       this.channels.delete(channel.platform);
       if (typeof channel.dispose === 'function') void channel.dispose();
@@ -211,12 +211,12 @@ export class ImRuntime extends Service {
   async dispatchInbound(msg) {
     await this._ready;
     if (!msg || typeof msg.platform !== 'string' || typeof msg.chatId !== 'string') {
-      this.log.warn('dropped malformed inbound message: %o', msg);
+      this.log.warn('dropped malformed inbound message | 丢弃格式错误的入站消息: %o', msg);
       return;
     }
     const { platform, chatId, userId, text = '' } = msg;
     if (!this.channels.has(platform)) {
-      this.log.warn(`inbound from unregistered platform "${platform}" ignored`);
+      this.log.warn(`inbound from unregistered platform "${platform}" ignored | 忽略来自未注册平台的消息`);
       return;
     }
     if (!this.map.dedupe(platform, msg.msgId)) return; // FR-1.4 幂等去重
@@ -309,7 +309,7 @@ export class ImRuntime extends Service {
     // MVP 形态：trustOnFirstContact=true（个人自用）→ 自动信任
     if (cfg.trustOnFirstContact) {
       this.map.addToAllowlist(platform, userId);
-      this.log.info(`trust-on-first-contact: auto-trusted ${platform}:${userId}`);
+      this.log.info(`trust-on-first-contact: auto-trusted ${platform}:${userId} | 首次接触：已自动信任 ${platform}:${userId}`);
       await this.send({ platform, chatId }, {
         text: `👋 首次接触，已自动信任 ${userName ?? userId}（security.trustOnFirstContact=true）。\n发送 /new 创建会话开始派活。`,
       });
@@ -380,11 +380,11 @@ export class ImRuntime extends Service {
             await copyFile(att.path, dest);
             paths.push(dest);
           } catch (err) {
-            this.log.warn(`attachment copy failed: ${err.message}`);
+            this.log.warn(`attachment copy failed | 附件保存失败: ${err.message}`);
           }
         } else if (att.url) {
           // v1 不主动下载远程 URL（SSRF 风险），留 v2 视觉桥
-          this.log.warn('remote attachment url ignored (v2 视觉桥): %s', att.url);
+          this.log.warn('remote attachment url ignored (v2 vision bridge) | 远程附件 URL 暂不下载（v2 视觉桥）: %s', att.url);
         }
       }
       if (paths.length) {
@@ -418,7 +418,7 @@ export class ImRuntime extends Service {
       });
       return handle.agent;
     } catch (err) {
-      this.log.warn(`resume ${sessionId} failed (will create fresh): ${err.message}`);
+      this.log.warn(`resume ${sessionId} failed (will create fresh) | 恢复会话失败（将新建）: ${err.message}`);
       return null;
     }
   }

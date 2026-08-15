@@ -82,7 +82,7 @@ export function apply(ctx, config = {}, internals = {}) {
   ctx.get('im').registerChannel(channel);
 
   if (missing.length) {
-    logger.error(`dsh-im-wecom: missing ${missing.join(', ')}; channel stays disconnected`);
+    logger.error(`dsh-im-wecom: missing ${missing.join(', ')}; channel stays disconnected | 缺少凭据：${missing.join(', ')}，通道保持断开`);
     return () => channel.dispose();
   }
 
@@ -135,8 +135,8 @@ export function apply(ctx, config = {}, internals = {}) {
   server.listen(config.port ?? 8787, () => {
     if (disposed) return;
     const port = server.address().port;
-    channel.status = { connected: true, detail: `listening :${port}（需公网穿透到该端口）`, port };
-    logger.info(`dsh-im-wecom: callback server listening on :${port}`);
+    channel.status = { connected: true, detail: `listening :${port} (needs public tunnel | 需公网穿透)`, port };
+    logger.info(`dsh-im-wecom: callback server listening on :${port} | 回调服务已监听 :${port}`);
   });
 
   // 启动自检：查公网出口 IP 并提示加入「企业可信 IP」（60020 前置，免得发消息才炸）。
@@ -150,9 +150,9 @@ export function apply(ctx, config = {}, internals = {}) {
         const ipv4 = text.match(/(\d{1,3}\.){3}\d{1,3}/)?.[0];
         if (ipv4) {
           channel.status.publicIp = ipv4;
-          console.warn('⚠️ 企业微信要求把服务器出口 IP 加入「企业可信 IP」（应用详情 → 企业可信IP）。');
-          console.warn(`   你的出口 IP：${ipv4}   （企微报错里的 from ip 为准）`);
-          console.warn('   未加入前，回复消息会报 60020（not allow to access from your ip）。');
+          console.warn('⚠️ WeCom requires your server egress IP in the "Trusted IP" list (App settings → Trusted IP) | 企业微信要求把服务器出口 IP 加入「企业可信 IP」（应用详情 → 企业可信IP）。');
+          console.warn(`   Your egress IP: ${ipv4} (as reported by WeCom errors) | 你的出口 IP：${ipv4}（以企微报错里的 from ip 为准）`);
+          console.warn('   Until added, replies fail with 60020 (not allow to access from your ip) | 未加入前，回复消息会报 60020。');
           break;
         }
       } catch { /* 试下一个 */ }
@@ -193,7 +193,7 @@ export function apply(ctx, config = {}, internals = {}) {
       msgId: xmlField(xml, 'MsgId') || `${Date.now()}`,
       chatType: 'private',
       attachments,
-    }).catch((err) => logger.warn('dsh-im-wecom: inbound dispatch failed: %s', err?.message ?? err));
+    }).catch((err) => logger.warn('dsh-im-wecom: inbound dispatch failed | 入站消息处理失败: %s', err?.message ?? err));
   }
 
   // ── access_token ─────────────────────────────────────────────────────────
@@ -232,11 +232,11 @@ export function apply(ctx, config = {}, internals = {}) {
     });
     const data = await resp.json().catch(() => ({}));
     if (data.errcode !== 0) {
-      logger.error('dsh-im-wecom: message/send failed: %s (code=%s) touser=%s', data.errmsg, data.errcode, out.chatId);
+      logger.error('dsh-im-wecom: message/send failed | 发送失败: %s (code=%s) touser=%s', data.errmsg, data.errcode, out.chatId);
       if (data.errcode === 60020) {
         const ip = String(data.errmsg ?? '').match(/from ip: ([\d.]+)/)?.[1] ?? '未知';
-        console.warn(`❌ 企微回复被拒（60020）：服务器出口 IP 不在白名单。`);
-        console.warn(`   当前出口 IP：${ip}  → 去企微后台「应用详情 → 企业可信 IP」添加后重试。`);
+        console.warn(`❌ WeCom reply rejected (60020): egress IP not in whitelist | 企微回复被拒（60020）：服务器出口 IP 不在白名单。`);
+        console.warn(`   Current egress IP: ${ip} → add it in WeCom admin (App → Trusted IP), then retry | 当前出口 IP：${ip} → 去企微后台「应用详情 → 企业可信 IP」添加后重试。`);
       }
       throw new Error(`wecom message/send failed: ${data.errmsg ?? data.errcode}`);
     }

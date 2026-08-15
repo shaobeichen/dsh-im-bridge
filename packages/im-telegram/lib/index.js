@@ -69,7 +69,7 @@ export function apply(ctx, config = {}) {
   ctx.get('im').registerChannel(channel);
 
   if (!token) {
-    logger.error('dsh-im-telegram: no bot token (set TELEGRAM_BOT_TOKEN or config token); channel stays disconnected');
+    logger.error('dsh-im-telegram: no bot token — set TELEGRAM_BOT_TOKEN or config token; channel stays disconnected | 缺少 bot token，请设置 TELEGRAM_BOT_TOKEN，通道保持断开');
     return () => channel.dispose();
   }
 
@@ -79,7 +79,7 @@ export function apply(ctx, config = {}) {
       const me = await apiGet('/getMe');
       botUsername = me?.result?.username ?? '';
       channel.status = { connected: true, detail: `@${botUsername}` };
-      logger.info(`dsh-im-telegram: connected as @${botUsername}`);
+      logger.info(`dsh-im-telegram: connected as @${botUsername} | 已连接 @${botUsername}`);
     } catch (err) {
       channel.status = { connected: false, detail: `getMe failed: ${err.message}` };
       logger.error('dsh-im-telegram: %s', err.message);
@@ -151,19 +151,19 @@ export function apply(ctx, config = {}) {
           try {
             await handleUpdate(update);
           } catch (err) {
-            logger.warn('dsh-im-telegram: update %d failed: %s', update.update_id, err.message);
+            logger.warn('dsh-im-telegram: update %d failed | 消息处理失败: %s', update.update_id, err.message);
           }
         }
       } catch (err) {
         // FR-1.5 断线重连：指数退避（上限 30s）
         if (isFatal(err)) {
           channel.status = { connected: false, detail: `fatal: ${err.message}` };
-          logger.error('dsh-im-telegram: fatal polling error, stopping: %s', err.message);
+          logger.error('dsh-im-telegram: fatal polling error, stopping | 致命轮询错误，停止: %s', err.message);
           running = false;
           return;
         }
         channel.status = { connected: false, detail: err.message };
-        logger.warn('dsh-im-telegram: polling error: %s (retry in %dms)', err.message, retryDelay);
+        logger.warn('dsh-im-telegram: polling error | 轮询错误: %s (retry in %dms | %dms 后重试)', err.message, retryDelay);
         await sleep(retryDelay);
         retryDelay = Math.min(retryDelay * 2, 30_000);
       }

@@ -29,11 +29,11 @@ const DEBUG = argv.includes('--debug') || process.env.IM_WECOM_DEBUG === '1';
 const missing = ['WECOM_CORP_ID', 'WECOM_AGENT_ID', 'WECOM_SECRET', 'WECOM_CALLBACK_TOKEN', 'WECOM_ENCODING_AES_KEY']
   .filter((k) => !process.env[k]);
 if (missing.length) {
-  console.error(`❌ 需要环境变量：${missing.join(', ')}（详见 docs/wecom-setup.md）`);
+  console.error(`Missing env vars: ${missing.join(', ')} (see docs/wecom-setup.md) | 需要环境变量：${missing.join(', ')}（详见 docs/wecom-setup.md）`);
   process.exit(1);
 }
 if (!MOCK_LLM && !process.env.DEEPSEEK_API_KEY) {
-  console.error('❌ 需要 DEEPSEEK_API_KEY（或用 --mock-llm 走脚本化模型，仅 demo 模式）。');
+  console.error('DEEPSEEK_API_KEY is required (or use --mock-llm in demo mode) | 需要 DEEPSEEK_API_KEY（或用 --mock-llm 走脚本化模型，仅 demo 模式）。');
   process.exit(1);
 }
 

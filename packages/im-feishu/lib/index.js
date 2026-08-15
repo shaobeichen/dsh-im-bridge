@@ -75,7 +75,7 @@ export function apply(ctx, config = {}, internals = {}) {
 
   if (!appId || !appSecret) {
     // FR-9.3：缺凭据 = 优雅断开，不崩启动；/status 会显示缺口
-    logger.error('dsh-im-feishu: missing appId/appSecret (set FEISHU_APP_ID / FEISHU_APP_SECRET); channel stays disconnected');
+    logger.error('dsh-im-feishu: missing appId/appSecret — set FEISHU_APP_ID / FEISHU_APP_SECRET; channel stays disconnected | 缺少 appId/appSecret，请设置 FEISHU_APP_ID / FEISHU_APP_SECRET，通道保持断开');
     return () => channel.dispose();
   }
 
@@ -94,8 +94,8 @@ export function apply(ctx, config = {}, internals = {}) {
     autoReconnect: true,
     onReady: () => {
       if (disposed) return;
-      channel.status = { connected: true, detail: 'long connection ready' };
-      logger.info('dsh-im-feishu: long connection ready');
+      channel.status = { connected: true, detail: 'long connection ready | 长连接已就绪' };
+      logger.info('dsh-im-feishu: long connection ready | 长连接已就绪');
     },
     onError: (err) => {
       if (disposed) return;
@@ -105,8 +105,8 @@ export function apply(ctx, config = {}, internals = {}) {
   });
   wsClient.start({ eventDispatcher: dispatcher }).catch((err) => {
     if (disposed) return;
-    channel.status = { connected: false, detail: `start failed: ${err?.message ?? err}` };
-    logger.error('dsh-im-feishu: start failed: %s', err?.message ?? err);
+    channel.status = { connected: false, detail: `start failed | 启动失败: ${err?.message ?? err}` };
+    logger.error('dsh-im-feishu: start failed | 启动失败: %s', err?.message ?? err);
   });
 
   return () => channel.dispose();
@@ -135,7 +135,7 @@ export function apply(ctx, config = {}, internals = {}) {
       text,
       msgId: String(message.message_id ?? ''),
       chatType,
-    }).catch((err) => logger.warn('dsh-im-feishu: inbound dispatch failed: %s', err?.message ?? err));
+    }).catch((err) => logger.warn('dsh-im-feishu: inbound dispatch failed | 入站消息处理失败: %s', err?.message ?? err));
   }
 
   function handleCardAction(data) {
@@ -154,7 +154,7 @@ export function apply(ctx, config = {}, internals = {}) {
       userId: String(openId),
       userName: operator.name ?? openId,
       data: `${value.action}:${value.id ?? ''}:${value.answer ?? ''}`,
-    }).catch((err) => logger.warn('dsh-im-feishu: callback failed: %s', err?.message ?? err));
+    }).catch((err) => logger.warn('dsh-im-feishu: callback failed | 回调处理失败: %s', err?.message ?? err));
   }
 
   // ── 出站 ─────────────────────────────────────────────────────────────────
@@ -183,7 +183,7 @@ export function apply(ctx, config = {}, internals = {}) {
         });
         if (debug) logger.info('dsh-im-feishu: text sent to %s (%s) ok=%s', receiveId, receiveIdType, r?.code === 0);
       } catch (err) {
-        logger.error('dsh-im-feishu: send text to %s failed: %s (code=%s msg=%s)', receiveId, err?.message ?? err, err?.code, err?.msg);
+        logger.error('dsh-im-feishu: send to %s failed | 发送失败: %s (code=%s msg=%s)', receiveId, err?.message ?? err, err?.code, err?.msg);
         throw err;
       }
     }
