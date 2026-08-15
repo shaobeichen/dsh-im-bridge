@@ -45,11 +45,11 @@ export function apply(ctx, config = {}, internals = {}) {
   const sdk = internals.sdk ?? lark;
 
   const logLevel = config.logLevel ?? 'warn';
-  const client = new sdk.Client({ appId, appSecret, loggerLevel: sdk.LoggerLevel?.[logLevel] });
-  const dispatcher = new sdk.EventDispatcher({ loggerLevel: sdk.LoggerLevel?.[logLevel] });
   /** chatId → receive_id_type（'chat_id' | 'open_id'），入站时学习 */
   const chatIdKinds = new Map();
 
+  let client = null;
+  let dispatcher = null;
   let wsClient = null;
   let disposed = false;
 
@@ -74,9 +74,13 @@ export function apply(ctx, config = {}, internals = {}) {
   ctx.get('im').registerChannel(channel);
 
   if (!appId || !appSecret) {
+    // FR-9.3：缺凭据 = 优雅断开，不崩启动；/status 会显示缺口
     logger.error('dsh-im-feishu: missing appId/appSecret (set FEISHU_APP_ID / FEISHU_APP_SECRET); channel stays disconnected');
     return () => channel.dispose();
   }
+
+  client = new sdk.Client({ appId, appSecret, loggerLevel: sdk.LoggerLevel?.[logLevel] });
+  dispatcher = new sdk.EventDispatcher({ loggerLevel: sdk.LoggerLevel?.[logLevel] });
 
   dispatcher.register({
     'im.message.receive_v1': (data) => handleMessage(data),

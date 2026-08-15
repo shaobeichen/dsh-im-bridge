@@ -16,7 +16,15 @@ function fakeSdk() {
   let wsInstance = null;
 
   class FakeClient {
-    constructor(opts) { this.opts = opts; }
+    constructor(opts) {
+      // 模拟真实 lark SDK：缺 appSecret 时抛 ClientAssertionError（本适配器必须在创建前拦住）
+      if (!opts?.appSecret || !opts?.appId) {
+        const e = new Error('appSecret or clientAssertionProvider is required');
+        e.code = 7104;
+        throw e;
+      }
+      this.opts = opts;
+    }
     get im() {
       return {
         message: {
@@ -147,11 +155,29 @@ test('卡片按钮回调 card.action.trigger → handleCallback（含身份校�
   dispose();
 });
 
-test('缺少凭据：渠道断开并给出缺口提示（FR-9.3）', () => {
+test('缺少凭据：不崩启动，渠道断开并给出缺口提示（FR-9.3）', () => {
   const sdk = fakeSdk();
   const im = fakeIm();
-  const dispose = apply(ctx(im), { appId: '', appSecret: '' }, { sdk: sdk.fakeSdk });
+  // apply 不应抛错（真实 SDK 会在缺 secret 时抛 ClientAssertionError）
+  let dispose;
+  assert.doesNotThrow(() => {
+    dispose = apply(ctx(im), { appId: '', appSecret: '' }, { sdk: sdk.fakeSdk });
+  });
   assert.equal(im.channels.get('feishu').status.connected, false);
   assert.match(im.channels.get('feishu').status.detail, /missing/);
   dispose();
+});
+
+test('缺少凭据时不创建 SDK Client（不触发 ClientAssertionError）', () => {
+  const sdk = fakeSdk();
+  const im = fakeIm();
+  const dispose = apply(ctx(im), { appId: 'app1', appSecret: '' }, { sdk: sdk.fakeSdk });
+  assert.equal(im.channels.get('feishu').status.connected, false);
+  dispose();
+  // 有凭据时正常创建并连接
+  const sdk2 = fakeSdk();
+  const im2 = fakeIm();
+  const dispose2 = apply(ctx(im2), { appId: 'app1', appSecret: 'sec1' }, { sdk: sdk2.fakeSdk });
+  assert.equal(im2.channels.get('feishu').status.connected, true);
+  dispose2();
 });

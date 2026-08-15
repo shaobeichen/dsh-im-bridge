@@ -177,6 +177,7 @@ dsh web
 
 | 现象 | 原因与解决 |
 |---|---|
+| 启动 `dsh web` 报 `appSecret or clientAssertionProvider is required` | **环境变量没导出**：先 `export FEISHU_APP_ID / FEISHU_APP_SECRET` 再启动；缺凭据时通道会优雅断开，不会崩整个 dsh web |
 | 飞书通道没连上 | ① App ID/Secret 复制完整吗？② 应用是企业自建吗？③ 长连接只认 `cli_` 开头的 ID ④ 环境变量有没有在启动 `dsh web` 前导出 |
 | 连上了，但发消息 bot 不回 | ① 「事件配置」里加了 `im.message.receive_v1` 并**发布**了吗？② 可用范围包含你吗？③ 你私聊的是这个应用吗？ |
 | bot 回消息报"无权限"/"未授权" | 首次接触触发信任流程：管理员 `/trust feishu:<open_id>` 授权；或配置 `trustOnFirstContact: true` 自动信任 |
