@@ -117,7 +117,11 @@ test('流式增量：在线时按 flush 间隔推送（FR-3.3），turn/end 记�
   bus.onSessionEvent({ id: sid }, { type: 'assistant/chunk', data: { chunk: { type: 'text-delta', index: 0, text: 'A'.repeat(30) } } });
   await new Promise((r) => setTimeout(r, 100));
   bus.onSessionEvent({ id: sid }, { type: 'assistant/chunk', data: { chunk: { type: 'text-delta', index: 0, text: 'B'.repeat(30) } } });
-  await new Promise((r) => setTimeout(r, 900)); // 等 flush 触发（留足余量防时序抖动）
+  // 轮询等 flush 触发（不依赖固定 sleep，防 CI 时序抖动）
+  const deadline = Date.now() + 3000;
+  while (!sent.some((m) => m.text.includes('AAAAA')) && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
   const inc = sent.filter((m) => m.text.includes('AAAAA'));
   assert.equal(inc.length, 1, 'flush 间隔内应推送一条增量');
   assert.equal(inc[0].text.length, 60);

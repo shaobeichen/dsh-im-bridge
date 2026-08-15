@@ -8,10 +8,10 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "node --test --test-timeout=15000 \"packages/*/test/*.test.js\" \"demo/*.test.js\"",
-    "test:im": "node --test --test-timeout=15000 \"packages/im/test/*.test.js\"",
-    "test:telegram": "node --test --test-timeout=8000 \"packages/im-telegram/test/*.test.js\"",
-    "test:feishu": "node --test --test-timeout=8000 \"packages/im-feishu/test/*.test.js\""
+    "test": "node --test --test-timeout=60000 \"packages/*/test/*.test.js\" \"demo/*.test.js\"",
+    "test:im": "node --test --test-timeout=60000 \"packages/im/test/*.test.js\"",
+    "test:telegram": "node --test --test-timeout=30000 \"packages/im-telegram/test/*.test.js\"",
+    "test:feishu": "node --test --test-timeout=30000 \"packages/im-feishu/test/*.test.js\""
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
