@@ -11,7 +11,8 @@
     "dsh-im": "^1.0.3",
     "dsh-im-telegram": "^1.0.3",
     "dsh-im-feishu": "^1.0.3",
-    "dsh-im-wecom": "^1.0.3"
+    "dsh-im-wecom": "^1.0.3",
+    "dsh-im-weixin": "^1.0.3"
   },
   "files": [
     "cordis.patch.yml"

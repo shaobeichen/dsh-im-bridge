@@ -44,7 +44,7 @@ jobs:
           node - "$VERSION" <<'EOF'
           const fs = require('fs');
           const v = process.argv[2];
-          const pkgs = ['packages/im', 'packages/im-telegram', 'packages/im-feishu', 'packages/im-wecom'];
+          const pkgs = ['packages/im', 'packages/im-telegram', 'packages/im-feishu', 'packages/im-wecom', 'packages/im-weixin'];
           for (const dir of pkgs) {
             const f = `${dir}/package.json`;
             const d = JSON.parse(fs.readFileSync(f, 'utf8'));
@@ -60,7 +60,7 @@ jobs:
           const root = 'package.json';
           const rd = JSON.parse(fs.readFileSync(root, 'utf8'));
           rd.version = v;
-          for (const dep of ['dsh-im', 'dsh-im-telegram', 'dsh-im-feishu', 'dsh-im-wecom']) {
+          for (const dep of ['dsh-im', 'dsh-im-telegram', 'dsh-im-feishu', 'dsh-im-wecom', 'dsh-im-weixin']) {
             if (rd.dependencies && rd.dependencies[dep]) rd.dependencies[dep] = `^${v}`;
           }
           fs.writeFileSync(root, JSON.stringify(rd, null, 2) + '\n');
@@ -104,11 +104,20 @@ jobs:
           else
             npm publish --workspace dsh-im-wecom
           fi
+      - name: 发布 dsh-im-weixin
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if npm view dsh-im-weixin@${{ env.IM_VERSION }} version >/dev/null 2>&1; then
+            echo "已存在，跳过"
+          else
+            npm publish --workspace dsh-im-weixin
+          fi
       - name: 把版本同步提交回仓库（零本地命令）
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json packages/im/package.json packages/im-telegram/package.json packages/im-feishu/package.json packages/im-wecom/package.json
+          git add package.json package-lock.json packages/im/package.json packages/im-telegram/package.json packages/im-feishu/package.json packages/im-wecom/package.json packages/im-weixin/package.json
           if git diff --cached --quiet; then
             echo "package.json 版本与 tag 一致，无变更可提交"
           else

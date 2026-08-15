@@ -54,15 +54,16 @@ npm install -g @deepseek-ai/dsh     # global install; verify with: dsh --version
 # Don't want a global install? Prefix every command with npx: npx @deepseek-ai/dsh <command>
 ```
 
-All three platforms follow the same path: **install the plugin → configure credentials → restart → chat**. No need to clone this repo or write code.
+All four platforms follow the same path: **install the plugin → configure credentials → restart → chat**. No need to clone this repo or write code.
 
-> Want all three channels at once (or one-click install from dshmarket)? `dsh plugin --profile web add github:shaobeichen/dsh-im-bridge` is equivalent to installing the core + Feishu + WeCom + Telegram together; channels without credentials just show "disconnected" and don't affect the others.
+> Want all channels at once (or one-click install from dshmarket)? `dsh plugin --profile web add github:shaobeichen/dsh-im-bridge` is equivalent to installing the core + Feishu + WeCom + Telegram + WeChat together; channels without credentials just show "disconnected" and don't affect the others.
 
 | Platform | One-command install | Prepare | Use |
 |---|---|---|---|
 | Feishu | `dsh plugin --profile web add dsh-im dsh-im-feishu` | **QR setup (recommended)**: run `npx -y dsh-im-feishu-qr` and scan — creates the app and pre-fills permissions; or create an enterprise self-built app on the [Open Platform](https://open.feishu.cn/app) and get App ID / App Secret ([guide](docs/feishu-setup.md)) | Configure credentials, restart `dsh web`, private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
 | WeCom | `dsh plugin --profile web add dsh-im dsh-im-wecom` | Create a self-built app in the [admin console](https://work.weixin.qq.com/wework_admin/frame), get CorpID / AgentId / Secret, configure callback URL and Trusted IP ([guide](docs/wecom-setup.md)) | Configure credentials, restart `dsh web`, open the app from "Workbench": `/new` → send tasks; approval comes as text — reply `/approve <id> yes` (no buttons) |
 | Telegram | `dsh plugin --profile web add dsh-im dsh-im-telegram` | Create a bot with [@BotFather](https://t.me/BotFather), get the token ([guide](docs/telegram-setup.md)) | Configure credentials, restart `dsh web`, private-chat the bot: `/new` → send tasks; risky operations send an approval card — tap a button |
+| WeChat | `dsh plugin --profile web add dsh-im dsh-im-weixin` | **QR bind (recommended)**: run `npx -y dsh-im-weixin-qr` and scan with WeChat; prerequisite: your account has the WeChat bot entry under Me → Settings → Plugins ([guide](docs/weixin-setup.md)) | Restart `dsh web` after binding, then message the bot in WeChat: `/new` → send tasks; approvals come as text — reply `/approve <id> yes` (no buttons) |
 
 > Credentials go in environment variables (`FEISHU_APP_ID`, `WECOM_CORP_ID`, `TELEGRAM_BOT_TOKEN`, etc.). See each platform's setup doc for details.
 
@@ -75,8 +76,9 @@ All three platforms follow the same path: **install the plugin → configure cre
 |---|---|
 | packages/im | Core: message handling, sessions, approvals, notifications |
 | packages/im-telegram | Telegram adapter |
-| packages/im-feishu | Feishu adapter |
+| packages/im-feishu | Feishu adapter (incl. QR setup `dsh-im-feishu-qr`) |
 | packages/im-wecom | WeCom adapter |
+| packages/im-weixin | WeChat adapter (Tencent iLink, incl. QR bind `dsh-im-weixin-qr`) |
 | demo | Demo and runner scripts |
 | docs | Documentation |
 

@@ -4,9 +4,10 @@
 
 | 你想做什么 | 看这篇 |
 |---|---|
-| **把飞书跑通，在手机/电脑飞书里指挥 agent**（推荐路径） | [`feishu-setup.md`](feishu-setup.md) —— 从创建自建应用到在飞书里派活/审批，完整独立指南 |
+| **把飞书跑通，在手机/电脑飞书里指挥 agent**（推荐路径，可扫码接入） | [`feishu-setup.md`](feishu-setup.md) —— 从扫码建应用到在飞书里派活/审批，完整独立指南 |
 | 企业微信 | [`wecom-setup.md`](wecom-setup.md) —— 自建应用 + 回调加密 + 可信 IP |
 | Telegram（最省事） | [`telegram-setup.md`](telegram-setup.md) —— BotFather 建 bot，2 分钟搞定 |
+| 微信（个人微信机器人） | [`weixin-setup.md`](weixin-setup.md) —— 腾讯 iLink 官方通道，扫码绑定；**先确认账号有「我→设置→插件」入口** |
 | 先不看真 IM，在终端里体验效果（需要克隆仓库 + Node 22） | `node demo/mock-demo.mjs`（终端模拟） |
 | 装进 DSH（一条命令 `dsh plugin add`） | [`install.md`](install.md)（含 `-w` 说明与高级配置） |
 | 演示 vs 真实部署（运行器形态） | [`modes.md`](modes.md) |
@@ -17,6 +18,7 @@
 
 - **`feishu-setup.md`** —— 飞书联调完整指南。⚠️ 最容易踩的坑：审批按钮的 `card.action.trigger`
   回调在开放平台「**回调配置**」页签（不是「事件配置」），且每次改配置都要重新发布版本。
+- **`weixin-setup.md`** —— 微信联调指南。⚠️ 平台硬前提：账号需已获「微信机器人」资格（我→设置→插件），插件无法绕过。
 - **`install.md`** —— 装进 DSH 的完整流程（`dsh plugin add`、凭据、高级配置）。
 - **`example-cordis.patch.yml`** —— 高级自定义配置示例。
 - **`modes.md`** —— 运行器形态的 demo / prod 模式。

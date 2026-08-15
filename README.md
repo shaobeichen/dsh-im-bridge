@@ -53,15 +53,16 @@ npm install -g @deepseek-ai/dsh     # 全局安装；验证：dsh --version
 # 不想全局装？每次命令前加 npx：npx @deepseek-ai/dsh <命令>
 ```
 
-三个平台都是同一条路：**装插件 → 配凭据 → 重启 → 在聊天里用**。不用克隆本仓库、不用写代码。
+四个平台都是同一条路：**装插件 → 配凭据 → 重启 → 在聊天里用**。不用克隆本仓库、不用写代码。
 
-> 想一次装齐三个渠道（或从 dshmarket 一键安装）？`dsh plugin --profile web add github:shaobeichen/dsh-im-bridge` 等价于同时安装核心 + 飞书 + 企微 + Telegram；没配凭据的渠道会自动显示"未连接"，不影响其他渠道使用。
+> 想一次装齐全部渠道（或从 dshmarket 一键安装）？`dsh plugin --profile web add github:shaobeichen/dsh-im-bridge` 等价于同时安装核心 + 飞书 + 企微 + Telegram + 微信；没配凭据的渠道会自动显示"未连接"，不影响其他渠道使用。
 
 | 平台 | 一条命令安装 | 准备（拿什么） | 开始用 |
 |---|---|---|---|
 | 飞书 | `dsh plugin --profile web add dsh-im dsh-im-feishu` | **扫码接入（推荐）**：`npx -y dsh-im-feishu-qr` 扫码一键建应用、预填权限；或手动在[开放平台](https://open.feishu.cn/app)建企业自建应用拿 App ID / App Secret（[图文指引](docs/feishu-setup.md)） | 配好凭据重启 `dsh web`，在飞书私聊机器人：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |
 | 企业微信 | `dsh plugin --profile web add dsh-im dsh-im-wecom` | 在[管理后台](https://work.weixin.qq.com/wework_admin/frame)建自建应用，拿 CorpID / AgentId / Secret，并配置回调地址和可信 IP（[指引](docs/wecom-setup.md)） | 配好凭据重启 `dsh web`，手机"工作台"打开应用：`/new` → 派活；审批回复 `/approve <id> yes`（企微无按钮） |
 | Telegram | `dsh plugin --profile web add dsh-im dsh-im-telegram` | 用 [@BotFather](https://t.me/BotFather) 建 bot，拿 token（[图文指引](docs/telegram-setup.md)） | 配好凭据重启 `dsh web`，私聊 bot：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |
+| 微信 | `dsh plugin --profile web add dsh-im dsh-im-weixin` | **扫码绑定（推荐）**：`npx -y dsh-im-weixin-qr` 手机微信扫码即连；前提是账号有「我→设置→插件」的微信机器人入口（[指引](docs/weixin-setup.md)） | 绑定后重启 `dsh web`，在微信里给机器人发消息：`/new` → 派活；审批为文本 `/approve <id> yes`（微信无按钮） |
 
 > 凭据通过环境变量配置（`FEISHU_APP_ID`、`WECOM_CORP_ID`、`TELEGRAM_BOT_TOKEN` 等），具体见各平台 setup 文档。
 
@@ -74,8 +75,9 @@ npm install -g @deepseek-ai/dsh     # 全局安装；验证：dsh --version
 |---|---|
 | packages/im | 核心：聊天消息处理、会话管理、审批、通知 |
 | packages/im-telegram | Telegram 适配器 |
-| packages/im-feishu | 飞书适配器 |
+| packages/im-feishu | 飞书适配器（含扫码接入 `dsh-im-feishu-qr`） |
 | packages/im-wecom | 企业微信适配器 |
+| packages/im-weixin | 微信适配器（腾讯 iLink，含扫码绑定 `dsh-im-weixin-qr`） |
 | demo | 演示和运行脚本 |
 | docs | 使用文档 |
 

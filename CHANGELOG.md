@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### 新增
+
+- **微信渠道 `dsh-im-weixin`**：腾讯 iLink 个人微信机器人（官方协议，源自腾讯开源 MIT 项目 openclaw-weixin），
+  `getupdates` 长轮询免公网；`npx -y dsh-im-weixin-qr` 扫码绑定（含配对数字流程），
+  凭据自动写入 `$DSH_HOME/dsh-im/weixin-credentials.json`；无原生按钮，审批降级文本（18/18 测试）
+- **飞书扫码接入**：`npx -y dsh-im-feishu-qr` 扫码一键创建应用（官方 `registerApp`，
+  权限/事件/回调预填），凭据自动写入 `$DSH_HOME/dsh-im/feishu-credentials.json`；
+  `resolveSecret` 在 env 为空时自动回退扫码文件（env 仍优先）
+
 ### 工程
 
 - 仓库根变成可安装 bundle（根 `cordis.patch.yml` 注册 4 个插件 + 根依赖指向 npm 发布包）：`dsh plugin add github:shaobeichen/dsh-im-bridge` 一键装齐核心+三渠道（awesome-dsh-plugin / dshmarket 收录路径打通）

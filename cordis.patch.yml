@@ -2,7 +2,7 @@
 #
 # 用途：让 awesome-dsh-plugin / dshmarket 的一键安装生效：
 #   dsh plugin --profile web add github:shaobeichen/dsh-im-bridge
-# 等价于分别安装 dsh-im（核心）+ 三个渠道适配器；插件代码来自根依赖里
+# 等价于分别安装 dsh-im（核心）+ 四个渠道适配器；插件代码来自根依赖里
 # 声明的 npm 发布包（版本与 Release 自动同步，见 .github/workflows/npm-publish.yml）。
 - insert:
     - id: im
@@ -13,3 +13,5 @@
       name: dsh-im-telegram
     - id: im-wecom
       name: dsh-im-wecom
+    - id: im-weixin
+      name: dsh-im-weixin

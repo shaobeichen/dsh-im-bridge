@@ -11,7 +11,9 @@ dsh-im-bridge 是一个 DSH 插件家族 monorepo：核心 `dsh-im` + 各 IM 渠
 ```
 packages/im/          核心插件（ctx.im 服务、会话映射、命令、通知、审批、MockChannel）
 packages/im-telegram/ Telegram 适配器（已完成 ✅，可作参考实现）
-packages/im-feishu/   飞书适配器（已完成 ✅，官方 SDK，线上跑通）
+packages/im-feishu/   飞书适配器（已完成 ✅，官方 SDK，线上跑通；含扫码接入 bin/feishu-qr.mjs）
+packages/im-wecom/    企业微信适配器（已完成 ✅）
+packages/im-weixin/   微信适配器（已完成 ✅，腾讯 iLink 官方协议 + 扫码绑定 bin/weixin-qr.mjs）
 demo/                 mock-demo.mjs（终端演示）、feishu-real.mjs（飞书运行器，--mode demo|prod）
 docs/                 adapters-guide.md（适配器开发指南，写新适配器前必读）
 ```

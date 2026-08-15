@@ -31,7 +31,7 @@
 | 飞书 | 长连接 WS（**仅企业自建应用**） | webhook | 集群模式：多实例只随机推送一个 |
 | Telegram | getUpdates 长轮询 | webhook | 双进程轮询同一 token → 409 |
 | 企微/钉钉 | 长连接/stream | webhook | 企微主动消息 20 条/分钟配额 |
-| 个人微信 | 无官方 API | — | 只能 experimental gateway |
+| 个人微信 | **腾讯 iLink Bot API 长轮询**（官方，需账号获「微信机器人」资格） | — | 扫码绑定（`ilink/bot/get_bot_qrcode`）；无按钮，审批降级文本 |
 
 - **优先免公网**（PRD FR-1.3）；文档里把"这个平台能不能免公网"放在第一行
 - **订阅方式选错 = 静默失败**：选成 webhook 后连接还"活着"但事件全去了 webhook → 可观测性必须能看出"连接活着但没事件"
@@ -125,7 +125,7 @@
 | 企微 | 官方 SDK + 回调 URL 模式 | 主动消息 20 条/分钟；需要可信 IP 配置 |
 | 钉钉 | stream 模式（免公网） | 卡片回调需配置；@消息识别 |
 | Telegram | 已完成（polling + 假 API 测试） | 409 双进程；callback_data ≤64 字节 |
-| 微信 GW | 无官方 API，experimental | 合规风险；仅 gateway |
+| 微信 | 已完成（iLink 官方协议 + 扫码绑定） | **账号需获「微信机器人」资格**（我→设置→插件）；无按钮；配对数字流程 |
 
 ---
 
