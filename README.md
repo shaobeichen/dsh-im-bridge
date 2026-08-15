@@ -8,7 +8,13 @@
 
 ## 这是什么
 
-dsh-im-bridge 是一个"聊天机器人"中间件。装好之后，你在飞书或企业微信里给一个机器人发消息，消息会变成指令，交给电脑上的 DeepSeek Harness 去执行。简单说：**聊天窗口就是你的操作台**，不用一直守在电脑前。
+dsh-im-bridge 是 **[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的 IM 通道**。
+
+DeepSeek Harness（DSH）是一个在你电脑上本地运行的 AI 助手引擎：它能在你的工作目录里读写代码、执行命令、跑长任务，平时你通过它的网页界面来指挥它。
+
+dsh-im-bridge 做的事情，就是给这个网页界面加一个"远程遥控器"：装好之后，你在飞书、企业微信或 Telegram 里给机器人发消息，消息就会变成指令交给 DSH 去执行，结果再发回你的聊天里。
+
+简单说：**聊天窗口就是 DSH 的操作台**，不用一直守在电脑前。
 
 它能帮你：
 

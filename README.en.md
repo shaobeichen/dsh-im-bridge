@@ -8,7 +8,13 @@
 
 ## What is this
 
-dsh-im-bridge is a "chatbot" middleware. Once set up, you send messages to a bot in Feishu or WeCom, and those messages become instructions for the DeepSeek Harness running on your computer. In short: **your chat window is the control panel** — no need to sit in front of the computer.
+dsh-im-bridge is an **IM channel for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)**.
+
+DeepSeek Harness (DSH) is an AI agent engine that runs locally on your computer: it can read and write code in your working directory, run commands, and execute long tasks. Normally you control it through its web interface.
+
+dsh-im-bridge adds a "remote control" to that web interface: once set up, you send messages to a bot in Feishu, WeCom, or Telegram, and those messages become instructions for DSH — with results sent back to your chat.
+
+In short: **your chat window is DSH's control panel** — no need to sit in front of the computer.
 
 It helps you:
 
