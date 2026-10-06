@@ -1,0 +1,55 @@
+{
+  "name": "dsh-im-dingtalk",
+  "version": "1.0.5",
+  "description": "钉钉渠道适配器（dsh-im 插件家族）：Stream 模式长连接，免公网；支持卡片回调审批。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "dsh-im": "^1.0.5"
+  },
+  "dependencies": {
+    "dingtalk-stream": "^2.1.5"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shaobeichen/dsh-im-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shaobeichen/dsh-im-bridge/issues"
+  },
+  "homepage": "https://github.com/shaobeichen/dsh-im-bridge",
+  "author": "shaobeichen",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "dingtalk",
+    "dingtalk-bot",
+    "dingtalk-stream",
+    "im-bridge"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

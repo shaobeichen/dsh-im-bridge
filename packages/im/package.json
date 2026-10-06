@@ -21,11 +21,10 @@
     "cordis.patch.yml"
   ],
   "license": "MIT",
+  "_peerNotes": "runtime (lib/) imports only @deepseek-ai/cordis, @deepseek-ai/dsh-llm and @deepseek-ai/schemastery. @deepseek-ai/dsh-agent and @deepseek-ai/dsh-session were declared but never imported by lib/ (only tests reference dsh-agent-loop et al., which do not ship in the bundle), so they were removed to avoid a false incompatibility block on dsh 0.2.x. dsh-llm's range was widened from ^0.1.0-rc.6 to >=0.1.0-rc.6 <0.3.0 because createUserMessage is present and unchanged across 0.1.x/0.2.x (verified against dsh 0.2.0-rc.2).",
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
-    "@deepseek-ai/dsh-agent": "^0.1.0-rc.6",
-    "@deepseek-ai/dsh-session": "^0.1.0-rc.6",
-    "@deepseek-ai/dsh-llm": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-llm": ">=0.1.0-rc.6 <0.3.0",
     "@deepseek-ai/schemastery": "^3.18.1"
   },
   "engines": {

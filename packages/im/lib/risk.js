@@ -56,8 +56,18 @@ export function defaultRiskRules() {
  */
 export function evaluateRisk(tool, argsJson, rules = defaultRiskRules()) {
   const haystack = argsJson ?? '';
+  // 🔴 低风险白名单只对**单一命令**生效。
+  //
+  // 白名单规则（`npm install`、`rm -rf node_modules`…）故意排在前面，用于避免审批疲劳；
+  // 但它们是**子串**匹配，于是复合命令会被降级：
+  //   `npm install && rm -rf /` 命中 `npm install`(low) 就直接返回 low ⇒ 审批门对 low
+  //   放行 ⇒ 危险命令**完全绕过审批**（round-n1 F02，已实测复现）。
+  // 修法：检测到 shell 控制符（复合命令）时跳过 low 规则，让后面的 high/medium 规则接管；
+  // 单一命令仍按原顺序取首个命中，白名单语义不变。
+  const compound = /(&&|\|\||[;|`]|\$\(|\\n)/.test(haystack);
   for (const rule of rules) {
     if (rule.tool !== tool) continue;
+    if (rule.risk === 'low' && compound) continue;
     if (rule.args) {
       let re;
       try {

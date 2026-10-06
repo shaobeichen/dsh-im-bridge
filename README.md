@@ -33,7 +33,7 @@ DeepSeek Harness（DSH）是一个本地运行的 AI 助手引擎——能在你
 | 飞书 | ✅ 可用 | 官方长连接，审批是卡片按钮，已真实联调 |
 | 企业微信 | ✅ 可用 | 回调 + 消息加解密，审批走文本命令 |
 | Telegram | ✅ 已实现 | 免公网轮询，审批是按钮（需自己申请 bot token） |
-| 钉钉 | 规划中 | — |
+| 钉钉 | ✅ 可用 | **官方 Stream 长连接，免公网**；审批是卡片按钮（不可用时降级文本命令） |
 
 ## 📦 里面有什么
 
@@ -63,6 +63,7 @@ npm install -g @deepseek-ai/dsh     # 全局安装；验证：dsh --version
 | 企业微信 | `dsh plugin --profile web add dsh-im dsh-im-wecom` | 在[管理后台](https://work.weixin.qq.com/wework_admin/frame)建自建应用，拿 CorpID / AgentId / Secret，并配置回调地址和可信 IP（[指引](docs/wecom-setup.md)） | 配好凭据重启 `dsh web`，手机"工作台"打开应用：`/new` → 派活；审批回复 `/approve <id> yes`（企微无按钮） |
 | Telegram | `dsh plugin --profile web add dsh-im dsh-im-telegram` | 用 [@BotFather](https://t.me/BotFather) 建 bot，拿 token（[图文指引](docs/telegram-setup.md)） | 配好凭据重启 `dsh web`，私聊 bot：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |
 | 微信 | `dsh plugin --profile web add dsh-im dsh-im-weixin` | **网页扫码绑定（推荐）**：设置 → 插件 → 微信 → 点「扫码绑定」→ 手机微信扫码（配对数字在网页输入）；前提是账号有「我→设置→插件」的微信机器人入口（[指引](docs/weixin-setup.md)） | 绑定后重启 `dsh web`，在微信里给机器人发消息：`/new` → 派活；审批为文本 `/approve <id> yes`（微信无按钮） |
+| 钉钉 | `dsh plugin --profile web add dsh-im dsh-im-dingtalk` | 在[开放平台](https://open-dev.dingtalk.com/)建**企业内部应用**，拿 Client ID / Secret；机器人「消息接收模式」**必须选 Stream 模式**并发布（[指引](docs/dingtalk-setup.md)） | 配好凭据重启 `dsh web`，在钉钉里给机器人发消息：`/new` → 派活；危险操作弹审批卡片，点按钮放行 |
 
 > 凭据通过环境变量配置（`FEISHU_APP_ID`、`WECOM_CORP_ID`、`TELEGRAM_BOT_TOKEN` 等），具体见各平台 setup 文档。
 
@@ -78,6 +79,7 @@ npm install -g @deepseek-ai/dsh     # 全局安装；验证：dsh --version
 | packages/im-feishu | 飞书适配器（含扫码接入 `dsh-im-feishu-qr`） |
 | packages/im-wecom | 企业微信适配器 |
 | packages/im-weixin | 微信适配器（腾讯 iLink，含扫码绑定 `dsh-im-weixin-qr`） |
+| packages/im-dingtalk | 钉钉适配器（官方 Stream 模式，免公网） |
 | demo | 演示和运行脚本 |
 | docs | 使用文档 |
 

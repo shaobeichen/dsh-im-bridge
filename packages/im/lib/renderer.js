@@ -9,6 +9,64 @@
 export const MAX_MESSAGE_CHARS = 3500;
 
 /**
+ * 按 **UTF-8 字节** 上限切分文本。平台限制多以字节计（中文 3 字节/字），
+ * 按字符切会严重超限。
+ *
+ * **无损不变式：`splitByBytes(t, n).join('') === t`**（含分隔符）。
+ * 实现要点：用 `split(/(?<=\n)/)` 让每段行尾的 `\n` 归属该行，
+ * 这样按行累加、必要时按字符硬切，都不会吞掉任何字符。
+ *
+ * 钉钉实测偏保守：一条 6546 字节的 markdown 消息会在约 5600 字节处被平台截断
+ * （用户只看到「输出不完整」）。渠道应声明 `maxMessageBytes`，由核心发送前切分。
+ *
+ * @param {string} text
+ * @param {number} maxBytes 单条上限（字节，建议 ≥ 1）
+ * @returns {string[]} 各段 UTF-8 字节数 ≤ maxBytes；拼回等于原文；空串返回 []
+ *
+ * ⚠️ 不变式的唯一例外：**单个 Unicode 码点本身大于 maxBytes 时无法再切**，
+ * 该码点会独占一段并超出上限（如 emoji 4 字节、`maxBytes=1`）。这是数学上的
+ * 必然，不是缺陷；调用方应保证 maxBytes 远大于 4（钉钉默认 3000）。
+ */
+export function splitByBytes(text, maxBytes) {
+  const s = String(text ?? '');
+  if (!s) return [];
+  const limit = Math.max(1, maxBytes);
+  if (Buffer.byteLength(s, 'utf8') <= limit) return [s];
+
+  const parts = [];
+  let cur = '';
+  let curBytes = 0;
+
+  // 行尾 \n 保留在本行内 → 拼接即还原
+  for (const line of s.split(/(?<=\n)/)) {
+    const lineBytes = Buffer.byteLength(line, 'utf8');
+    if (curBytes + lineBytes <= limit) {
+      cur += line;
+      curBytes += lineBytes;
+      continue;
+    }
+    if (cur) { parts.push(cur); cur = ''; curBytes = 0; }
+    if (lineBytes <= limit) { cur = line; curBytes = lineBytes; continue; }
+
+    // 超长单行：按字符硬切（逐字符累加，保证不丢字符）
+    let piece = '';
+    let pieceBytes = 0;
+    for (const ch of line) {
+      const cb = Buffer.byteLength(ch, 'utf8');
+      // 🔴 `piece &&` 不可省：码点超预算时若先 push 空串，会产生**空消息段**
+      // （实测 `splitByBytes('中文abc', 1)` 曾得到 ["","中","文","a","b","c"]）。
+      if (piece && pieceBytes + cb > limit) { parts.push(piece); piece = ''; pieceBytes = 0; }
+      piece += ch;
+      pieceBytes += cb;
+    }
+    cur = piece;
+    curBytes = pieceBytes;
+  }
+  if (cur) parts.push(cur);
+  return parts.length ? parts : [s];
+}
+
+/**
  * Markdown → 纯文本（降级渲染）。
  * - 代码围栏：保留内容，代码块不丢失
  * - 行内代码/粗体/斜体/链接：剥掉标记，链接保留为 "标题 (url)"
@@ -58,7 +116,13 @@ export function markdownToText(md) {
   return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
-/** 按段落拆分长文本；返回最多 chunks 段（每段 ≤ maxLen，优先在段落边界断）。 */
+/**
+ * 按段落拆分长文本；返回最多 chunks 段（每段 ≤ maxLen，优先在段落边界断）。
+ *
+ * ⚠️ 超过 maxChunks 的多余内容**不能静默丢弃**：末尾会补一条显式提示，
+ * 告知还剩多少段以及如何取全文（/log）。此前直接 `slice(0, maxChunks)`
+ * 会把剩下的内容无声吞掉，用户只看到「输出不完整」却不知为何。
+ */
 export function splitLongText(text, { maxLen = MAX_MESSAGE_CHARS, maxChunks = 6 } = {}) {
   if (text.length <= maxLen) return [text];
   const paragraphs = text.split(/\n{2,}/);
@@ -93,7 +157,11 @@ export function splitLongText(text, { maxLen = MAX_MESSAGE_CHARS, maxChunks = 6 
     }
   }
   push();
-  return chunks.slice(0, maxChunks);
+  if (chunks.length <= maxChunks) return chunks;
+  // 有截断就明说：剩余段数 + 取全文的办法
+  const kept = chunks.slice(0, maxChunks);
+  kept.push(`……（输出过长，还有 ${chunks.length - maxChunks} 段未显示；回复 /log 获取全文）`);
+  return kept;
 }
 
 /**

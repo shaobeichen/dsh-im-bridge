@@ -48,6 +48,9 @@ export class SessionMap {
           sessionId: entry.sessionId,
           createdAt: entry.createdAt ?? Date.now(),
           lastActivityAt: entry.lastActivityAt ?? 0,
+          // 恢复 `/mute` 状态（round-n1 F14）
+          muted: entry.muted === true,
+          mutedBy: entry.mutedBy ?? '',
           /** Map<userId, {name, lastActiveAt}> */
           users: new Map(),
         };
@@ -82,22 +85,27 @@ export class SessionMap {
     return this.chats.has(chatKey(platform, chatId));
   }
 
-  /** 创建绑定（会话 id 确定性生成）。 */
-  create(platform, chatId, { chatType = 'private' } = {}) {
+  /**
+   * 创建绑定。
+   * 默认会话 id 确定性生成（重启不变）。传入 sessionId 可显式指定——
+   * `/new` 必须用它：确定性 id 会与磁盘上已持久化的同名会话冲突
+   * （`session "<id>" already exists`），导致 /new 永远失败。
+   */
+  create(platform, chatId, { chatType = 'private', sessionId } = {}) {
     const key = chatKey(platform, chatId);
-    const sessionId = sessionIdFor(platform, chatId);
+    const id = sessionId ?? sessionIdFor(platform, chatId);
     if (this.chats.has(key)) return this.chats.get(key);
     const binding = {
       platform,
       chatId: String(chatId),
       chatType,
-      sessionId,
+      sessionId: id,
       createdAt: Date.now(),
       lastActivityAt: Date.now(),
       users: new Map(),
     };
     this.chats.set(key, binding);
-    this.bySession.set(sessionId, key);
+    this.bySession.set(id, key);
     this._scheduleSave();
     return binding;
   }
@@ -134,10 +142,15 @@ export class SessionMap {
     return this.chats.size;
   }
 
-  /** 幂等去重：msgId 已处理过返回 false，否则记录并返回 true。 */
-  dedupe(platform, msgId, limit = 1000) {
+  /** 幂等去重：(chatId, msgId) 已处理过返回 false，否则记录并返回 true。
+   *
+   * 🔴 键必须含 chatId（新计轮 round-7 F02）：平台消息号（如 Telegram
+   * message_id）只在**所属聊天内**唯一——键里只有 platform:msgId 时，两个聊天
+   * 的同号消息会把后到者静默丢弃（任务/命令/答案全丢，无任何回执）。
+   */
+  dedupe(platform, chatId, msgId, limit = 1000) {
     if (!msgId) return true;
-    const key = `${platform}:${msgId}`;
+    const key = `${platform}:${chatId}:${msgId}`;
     if (this.seen.has(key)) return false;
     this.seen.set(key, Date.now());
     if (this.seen.size > limit) {
@@ -199,6 +212,9 @@ export class SessionMap {
           sessionId: b.sessionId,
           createdAt: b.createdAt,
           lastActivityAt: b.lastActivityAt,
+          // `/mute` 的状态必须持久化，否则重启即失效（round-n1 F14 连带问题）
+          muted: b.muted === true,
+          mutedBy: b.mutedBy ?? '',
           users: [...b.users.entries()].map(([userId, u]) => ({ userId, name: u.name, lastActiveAt: u.lastActiveAt })),
         })),
         allowlist: [...this.allowlist],

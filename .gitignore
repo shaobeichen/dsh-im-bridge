@@ -10,3 +10,6 @@ packages/*/test/.tmp/
 .env.*
 !.env.example
 *.local
+
+# 多模型复审的中间产物（提示词/JSONL/报告，单次可达 MB 级）
+.verify/

@@ -96,6 +96,42 @@
 > 教训：平台限制分"配置期可见"和"运行期才炸"两类。后者必须**程序自检 + 文档必做清单**双保险，
 > 放附录 = 等于没写（企微可信 IP 就属于这一类，第一版只放附录，用户果然踩了）。
 
+## 十·二、Stream 类平台的订阅类型陷阱（钉钉实战，最耗时的一个坑）
+
+钉钉 Stream 用 WebSocket 长连接。第一个版本"连接成功但收不到任何消息"，
+排查了**网络、代理、应用发布、机器人配置、SDK 版本**全部无果，
+最终发现是一行订阅代码写错：
+
+```js
+// ❌ 只订阅 EVENT/*，而 topic:'*' 不包含 CALLBACK 类型
+client.registerAllEventListener(handler);
+
+// ✅ 机器人消息和卡片回调都是 CALLBACK，必须显式注册
+client.registerCallbackListener(TOPIC_ROBOT, handler);
+client.registerCallbackListener(TOPIC_CARD, handler);
+client.registerAllEventListener(handler);
+```
+
+**教训（通用）**：
+
+1. **WS 握手成功 ≠ 订阅成功 ≠ 能收消息**。三者是独立的，别把
+   `connected=true` 当成"链路没问题"的证据。
+2. **`registered` 这类 SDK 内部标志可能只反映部分订阅**——钉钉的 `registered`
+   只跟 EVENT 握手有关，**长期 `false` 是正常的**，拿它当故障指标会误判很久。
+3. **`getConfig().subscriptions` 才是订阅的直接证据**——搭建适配器时第一件事
+   就是打印它，确认订阅类型齐全。
+4. **对照官方多语言 SDK**：同一平台的 Python SDK 会为每个 callback handler
+   push `{type:'CALLBACK', topic}`，Node SDK 需要显式调用对应方法。
+   跨语言 SDK 对照是发现"漏调用"最快的方法——比读文档快得多。
+5. **"能发不能收"要优先怀疑订阅类型**，而不是网络：发送走 HTTP 短连接、
+   接收走 WS 推送，两者路径完全不同。
+6. **别被中间件带偏**：本次排查中我曾长时间怀疑代理 fake-IP/TUN 模式和
+   另一个应用的会话占用，都做了实验并**证伪**。中间件假设要先做**可证伪的最小实验**
+   再动手改环境（我关过 TUN、杀过用户正在用的进程，都是不必要的）。
+
+> 本次还顺带证明：**回归测试必须验证"改回去会不会变红"**——
+> 写完测试后我故意注释掉修复代码，确认 3 条回归测试准确变红，测试才有意义。
+
 ## 十一、安全：失败关闭
 
 飞书平台侧：本机 macOS 无可用沙箱后端时，官方选择**拒绝执行**而不是裸跑。
@@ -123,7 +159,7 @@
 | 平台 | 第一件事 | 已知坑 |
 |---|---|---|
 | 企微 | 官方 SDK + 回调 URL 模式 | 主动消息 20 条/分钟；需要可信 IP 配置 |
-| 钉钉 | stream 模式（免公网） | 卡片回调需配置；@消息识别 |
+| 钉钉 | 已完成（Stream 模式官方 SDK + 卡片回调） | Stream 模式必须选对，选成 HTTP 回调会「连接正常但收不到消息」；sessionWebhook 有时效；@消息识别 |
 | Telegram | 已完成（polling + 假 API 测试） | 409 双进程；callback_data ≤64 字节 |
 | 微信 | 已完成（iLink 官方协议 + 扫码绑定） | **账号需获「微信机器人」资格**（我→设置→插件）；无按钮；配对数字流程 |
 

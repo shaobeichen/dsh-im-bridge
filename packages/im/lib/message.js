@@ -59,9 +59,18 @@ export function parseUserKey(raw, platform) {
   return null;
 }
 
-/** 会话 id（chat 的确定性映射，保证重启后不变，FR-2.2）。 */
+/** 会话 id（chat 的确定性映射，保证重启后不变，FR-2.2）。
+ *
+ * 🔴 编码必须是**单射**的（新计轮 round-7 F01）：旧版把非法字符替换为 '-' 并
+ * 剥离首尾 '-'，导致 `12345` 与 `-12345`、`a/b` 与 `a-b` 生成相同 session id
+ * ——两个聊天共用一个会话：上下文互相污染、提问/通知反查（bySessionId）
+ * 指向后建的聊天（内容泄露 + 消息错投），且不需要并发即可复现。
+ * encodeURIComponent 是可逆编码（不同 chatId → 必然不同结果）；纯字母数字
+ * 与 `-`/`_`/`.` 的 chatId 编码结果与旧格式完全一致 → 既有会话不受影响，
+ * 只有含特殊字符的 chatId 会换新 id（其旧 id 本就存在歧义）。
+ */
 export function sessionIdFor(platform, chatId) {
-  const safe = String(chatId).replace(/[^A-Za-z0-9._-]/g, '-').replace(/^-+|-+$/g, '');
+  const safe = encodeURIComponent(String(chatId));
   return `im-${platform}-${safe || 'chat'}`;
 }
 
